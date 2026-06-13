@@ -58,6 +58,10 @@ class PracticeMode {
       groundY: scene._level._groundY,
       ceilingY: scene._level._ceilingY,
       speed: playerSpeed,
+<<<<<<< HEAD
+=======
+      physicsFrame: scene._physicsFrame,
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       timestamp: Date.now()
     };
     this.checkpoints.push(checkpoint);
@@ -100,6 +104,187 @@ class PracticeMode {
   }
 }
 
+<<<<<<< HEAD
+=======
+class MacroBot {
+  constructor(scene) {
+    this.scene = scene;
+    this.resetAll();
+  }
+
+  resetAll() {
+    this.recording = false;
+    this.playing = false;
+
+    this.cursor = 0;
+    this.isDown = false;
+
+    this.inputs = [];
+
+    this.meta = {
+      author: "Web Dashers",
+      level: "", // ill fix ts later
+      version: 1
+    };
+  }
+
+  startRecording(meta = {}) {
+    this.resetAll();
+    this.recording = true;
+    this.meta = { ...meta };
+  }
+
+  stopRecording() {
+    this.recording = false;
+    return this.exportObject();
+  }
+
+  clearRecording() {
+    this.inputs = [];
+    this.cursor = 0;
+    this.isDown = false;
+  }
+
+  rollbackRecording(currentFrame) {
+    this.inputs = this.inputs.filter(ev => (ev.frame ?? 0) <= currentFrame);
+    this.cursor = 0;
+    this.isDown = false;
+  }
+
+  clearPlayback() {
+    this.cursor = 0;
+    this.isDown = false;
+  }
+
+  rollbackPlayback(currentFrame) {
+    if (!this.inputs.length) return;
+
+    this.cursor = 0;
+    this.isDown = false;
+
+    this.scene._releaseButton(true);
+
+    while (
+      this.cursor < this.inputs.length &&
+      (this.inputs[this.cursor].frame ?? 0) <= currentFrame
+    ) {
+      const ev = this.inputs[this.cursor++];
+
+      if (ev.down) {
+        this.scene._pushButton(true);
+        this.isDown = true;
+      } else {
+        this.scene._releaseButton(true);
+        this.isDown = false;
+      }
+    }
+  }
+
+  startPlayback(macroData) {
+    const macro = typeof macroData === "string" ? JSON.parse(macroData) : macroData;
+
+    this.resetAll();
+    this.playing = true;
+
+    this.meta = {
+      ...this.meta,
+      ...(macro || {})
+    };
+
+    this.inputs = Array.isArray(macro?.inputs) ? macro.inputs.slice() : [];
+    this.inputs.sort((a, b) => (a.frame ?? 0) - (b.frame ?? 0));
+
+    this.cursor = 0;
+    this.isDown = false;
+  }
+
+  stopPlayback() {
+    this.playing = false;
+    this.cursor = 0;
+    this.isDown = false;
+  }
+
+  recordEdge(down, currentFrame) {
+    if (!this.recording) return;
+
+    const last = this.inputs[this.inputs.length - 1];
+    if (last && last.down === !!down && last.frame === currentFrame) {
+      return;
+    }
+
+    this.inputs.push({
+      frame: currentFrame,
+      down: !!down
+    });
+
+    this.isDown = !!down;
+  }
+
+  step(currentFrame) {
+    if (!this.playing) return;
+
+    while (
+      this.cursor < this.inputs.length &&
+      (this.inputs[this.cursor].frame ?? 0) <= currentFrame
+    ) {
+      const ev = this.inputs[this.cursor++];
+
+      if (ev.down) {
+        if (!this.isDown) {
+          this.scene._pushButton(true);
+          this.isDown = true;
+        }
+      } else {
+        if (this.isDown) {
+          this.scene._releaseButton(true);
+          this.isDown = false;
+        }
+      }
+    }
+  }
+
+  exportObject() {
+    return {
+      meta: this.meta,
+      inputs: this.inputs.slice()
+    };
+  }
+
+  exportString(pretty = false) {
+    return JSON.stringify(this.exportObject(), null, pretty ? 2 : 0);
+  }
+
+  download(filename = "macro.wbgdr") {
+    const blob = new Blob([this.exportString(true)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  importFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const text = String(event.target.result || "");
+          const macro = JSON.parse(text);
+          resolve(macro);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = () => reject(reader.error || new Error("Failed to read macro file"));
+      reader.readAsText(file);
+    });
+  }
+}
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 class GameScene extends Phaser.Scene {
   constructor() {
     super({
@@ -109,6 +294,7 @@ class GameScene extends Phaser.Scene {
   create() {
     this._bgSpeedX = 0.1;
     this._bgSpeedY = 0.1;
+<<<<<<< HEAD
     const defaultLevel = this._getDefaultLevel();
     if (!Array.isArray(window.allLevels) || window.allLevels.length === 0) {
       window.allLevels = [defaultLevel];
@@ -143,6 +329,8 @@ class GameScene extends Phaser.Scene {
       window._createdLevelReturnId = null;
       window._createdLevelPlaytestFromMyLevels = false;
     }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._menuCameraX = -centerX;
     this._prevCameraX = -centerX;
     this._bg = this.add.tileSprite(0, 0, screenWidth, screenHeight, "game_bg_01").setOrigin(0, 0).setScrollFactor(0).setDepth(-10);
@@ -233,7 +421,11 @@ class GameScene extends Phaser.Scene {
     this._level.additiveContainer.setVisible(false);
     this._level.container.setVisible(false);
     this._level.topContainer.setVisible(false);
+<<<<<<< HEAD
     this._attempts = parseInt(localStorage.getItem("gd_totalAttempts") || "0", 10);
+=======
+    this._attempts = parseInt(localStorage.getItem("gd_totalAttempts") || "1", 10);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._bestPercent = 0;
     this._lastPercent = 0;
     this._practiceBestPercent = parseFloat(localStorage.getItem("practiceBestPercent_" + (window.currentlevel[2] || "level_1")) || "0");
@@ -258,11 +450,19 @@ class GameScene extends Phaser.Scene {
     const _socialIconDefs = [
       {frame:  "",                       url: "",                                                     angle: 0,                row: 0, col: 0 },
       {frame:  "",                       url: "",                                                     angle: 0,                row: 0, col: 1 },
+<<<<<<< HEAD
       {frame:  "",                       url: "",                                                      angle: 0,                row: 0, col: 2 },
       {frame:  "",                       url: "",                                                     angle: 0,                row: 0, col: 3 },
 
       { frame: "gj_twIcon_001.png",      url: "https://x.com/RobTopGames",                          angle: -90, flipX: true, row: 1, col: 0 },
       { frame: "gj_ytIcon_001.png",      url: "https://www.youtube.com/@RobTopGames",               angle: 0,                row: 1, col: 1 },
+=======
+      {frame:  "",                       url: "",                                                     angle: 0,                row: 0, col: 2 },
+      {frame:  "",                       url: "",                                                     angle: 0,                row: 0, col: 3 },
+
+      { frame: "gj_twIcon_001.png",      url: "https://x.com/rohanis0000gd",                          angle: -90, flipX: true, row: 1, col: 0 },
+      { frame: "gj_ytIcon_001.png",      url: "https://www.youtube.com/@rohanis0000gd",               angle: 0,                row: 1, col: 1 },
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       { frame: "gj_tiktokIcon_001.png",  url: "https://www.tiktok.com/@rohanis00000",                 angle: -90, flipX: true, row: 1, col: 2 },
       { frame: "gj_githubIcon_001.png",  url: "https://github.com/web-dashers/web-dashers.github.io", angle: 0,                row: 1, col: 3 },
 
@@ -299,6 +499,10 @@ class GameScene extends Phaser.Scene {
 
     return icon;
   });
+<<<<<<< HEAD
+=======
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._copyrightText = this.add.text(0, 625, "© 2026 RobTop Games · geometrydash.com", {
       fontSize: "14px",
       color: "#ffffff",
@@ -340,6 +544,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     this._makeBouncyButton(this._menuUpdateLogBtn, 0.64, () => {
       this._buildUpdateLogPopup();
     }, () => this._menuActive && !this._updateLogPopup);
+<<<<<<< HEAD
     this._menuSettingsBtn = this.add.image(centerX + 110, screenHeight - 80, "GJ_GameSheet03", "GJ_optionsBtn_001.png").setScrollFactor(0).setDepth(30).setScale(0.8).setInteractive().setRotation(-Math.PI / 2).setFlipX(true);
     this._expandHitArea(this._menuSettingsBtn, 1.2);
     this._makeBouncyButton(this._menuSettingsBtn, 0.8, () => {
@@ -355,6 +560,25 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     this._menuNewgroundsBtn = this.add.image(centerX + 290, screenHeight - 80, "GJ_GameSheet03", "GJ_ngBtn_001.png").setScrollFactor(0).setDepth(30).setScale(0.8).setInteractive().setRotation(-Math.PI / 2).setFlipX(true);
     this._expandHitArea(this._menuNewgroundsBtn, 1.2);
     this._makeBouncyButton(this._menuNewgroundsBtn, 0.8, () => {
+=======
+    this._menuSettingsBtn = this.add.image(centerX + 92, screenHeight - 90, "GJ_GameSheet03", "GJ_optionsBtn_001.png").setScrollFactor(0).setDepth(30).setInteractive().setRotation(-Math.PI / 2).setFlipX(true);
+    this._expandHitArea(this._menuSettingsBtn, 1);
+    this._makeBouncyButton(this._menuSettingsBtn, 1, () => {
+      this._showSettingsScreen();
+    }, () => this._menuActive && !this._settingsPopup);
+    this._menuStatsBtn = this.add.image(centerX + 202, screenHeight - 90, "GJ_GameSheet03", "GJ_statsBtn_001.png").setScrollFactor(0).setDepth(30).setInteractive().setRotation(-Math.PI / 2).setFlipX(true);
+    this._expandHitArea(this._menuStatsBtn, 1);
+    this._makeBouncyButton(this._menuStatsBtn, 1, () => {
+      this._showStatsScreen();
+    }, () => this._menuActive);
+    this._menuAchievementsBtn = this.add.image(centerX - 12, screenHeight - 90, "GJ_GameSheet03", "GJ_achBtn_001.png").setScrollFactor(0).setDepth(30).setInteractive().setTint(0x666666);
+    this._expandHitArea(this._menuAchievementsBtn, 1);
+    this._makeBouncyButton(this._menuAchievementsBtn, 1, () => {
+    }, () => this._menuActive);
+    this._menuNewgroundsBtn = this.add.image(centerX + 312, screenHeight - 90, "GJ_GameSheet03", "GJ_ngBtn_001.png").setScrollFactor(0).setDepth(30).setInteractive().setRotation(-Math.PI / 2).setFlipX(true);
+    this._expandHitArea(this._menuNewgroundsBtn, 1);
+    this._makeBouncyButton(this._menuNewgroundsBtn, 1, () => {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       this._buildNewgroundsPopup();
     }, () => this._menuActive && !this._newgroundsPopup);
     this._menuGlitter = this.add.particles(0, 0, "GJ_WebSheet", {
@@ -384,7 +608,11 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         max: 100
       }
     }).setScrollFactor(0).setDepth(29);
+<<<<<<< HEAD
     this._playBtn = this.add.image(0, 0, "GJ_WebSheet", "GJ_playBtn_001.png").setScrollFactor(0).setDepth(30).setInteractive();
+=======
+    this._playBtn = this.add.image(0, 0, "GJ_GameSheet04", "GJ_playBtn_001.png").setScrollFactor(0).setDepth(30).setInteractive();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._playBtnPressed = false;
     this._makeBouncyButton(this._playBtn, 1, () => {
       this._openLevelSelect();
@@ -432,6 +660,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
       const backBtn = this.add.image(50, 48, "GJ_GameSheet03", "GJ_arrow_03_001.png")
         .setScrollFactor(0).setDepth(104).setFlipX(true).setFlipY(true)
         .setRotation(Math.PI).setInteractive();
+<<<<<<< HEAD
       this._makeBouncyButton(backBtn, 1, () => this._returnToMainMenu());
 
       this._creatorOverlayObjects = [overlay, blocker, cornerTL, cornerBL, backBtn];
@@ -443,6 +672,12 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         });
       };
 
+=======
+      this._makeBouncyButton(backBtn, 1, () => this._closeCreatorMenu());
+
+      this._creatorOverlayObjects = [overlay, blocker, cornerTL, cornerBL, backBtn];
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       const menuButtons = [
         "GJ_createBtn_001.png",
         "GJ_savedBtn_001.png",
@@ -479,7 +714,10 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         const btn = this.add.image(bx, by, "GJ_GameSheet04", frame)
           .setScrollFactor(0).setDepth(104).setScale(btnScale);
         const isSearchButton  = frame === "GJ_searchBtn_001.png";
+<<<<<<< HEAD
         const isSavedButton = frame === "GJ_savedBtn_001.png";
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         const isFeaturedButton = frame === "GJ_featuredBtn_001.png";
         const isEditorButton = frame === "GJ_createBtn_001.png"; 
         if (isSearchButton) {
@@ -488,6 +726,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
             this._closeCreatorMenu(true);
             this._openSearchMenu();
           }, () => true);
+<<<<<<< HEAD
         } else if (isSavedButton) {
           btn.setInteractive();
           this._makeBouncyButton(btn, btnScale, () => {
@@ -497,11 +736,23 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
           btn.setInteractive();
           this._makeBouncyButton(btn, btnScale, () => {
             openCreatorPage(() => this._openOnlineLevelsScene({ type: 6 }));
+=======
+        } else if (isFeaturedButton) {
+          btn.setInteractive();
+          this._makeBouncyButton(btn, btnScale, () => {
+            this._closeCreatorMenu(true);
+            this._openOnlineLevelsScene({ type: 6 });
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
           }, () => true);
         } else if (isEditorButton) {
           btn.setInteractive();
           this._makeBouncyButton(btn, btnScale, () => {
+<<<<<<< HEAD
             openCreatorPage(() => this._openEditorMenu());
+=======
+            this._closeCreatorMenu(true);
+            this._openEditorMenu();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
           }, () => true);
         } else {
           btn.setTint(0x666666);
@@ -601,6 +852,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
             const songIcon = this.add.image(tableX + 150, infoY, "GJ_GameSheet03", "GJ_musicIcon_001.png").setScale(0.65);
             const songTxt = this.add.bitmapText(songIcon.x + 22, infoY, "bigFont", level.song, 18).setOrigin(0, 0.5);
             const statusIcon = this.add.image(tableX + 380, infoY, "GJ_GameSheet03", "GJ_infoIcon_001.png").setScale(0.65).setFlipY(true).setAngle(90);
+<<<<<<< HEAD
             const statusTxt = this.add.bitmapText(statusIcon.x + 22, infoY, "bigFont", this._getCreatedLevelStatusText(level), 18).setOrigin(0, 0.5);
             
             const viewBtn = this._createGdViewButton(tableX + tableW - 80, slotY, () => {
@@ -611,6 +863,19 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
             }, { depth: 95, width: 118, height: 56, fontSize: 30 });
 
             listContainer.add([bgStripe, separator, nameTxt, revText, lenIcon, lenTxt, songIcon, songTxt, statusIcon, statusTxt, viewBtn]);
+=======
+            const statusTxt = this.add.bitmapText(statusIcon.x + 22, infoY, "bigFont", level.status, 18).setOrigin(0, 0.5);
+            
+            const viewBtn = this.add.nineslice(tableX + tableW - 80, slotY, "GJ_button01", null, 120, 60, 24, 24, 24, 24 ).setScale(0.75).setInteractive();
+            const viewTxt = this.add.bitmapText(viewBtn.x - 2, viewBtn.y - 1, "bigFont", "View", 32).setOrigin(0.5).setScale(0.8);
+            
+            this._makeBouncyButton(viewBtn, 0.75, () => {
+                this._closeEditorMenu(false);
+                this._openLevelView(level);
+            });
+
+            listContainer.add([bgStripe, separator, nameTxt, revText, lenIcon, lenTxt, songIcon, songTxt, statusIcon, statusTxt, viewBtn, viewTxt]);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         });
         if (createdLevels.length === 0) {
             container.add(this.add.bitmapText(centerX, tableY + (tableH/2), "bigFont", "No Levels", 30).setOrigin(0.5).setAlpha(0.5));
@@ -688,10 +953,15 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
             createdLevels.push(newLevel);
             localStorage.setItem("created_levels", JSON.stringify(createdLevels));
 
+<<<<<<< HEAD
             this._runBlackPageTransition(() => {
                 this._closeEditorMenu();
                 this._openLevelView(newLevel);
             });
+=======
+            this._closeEditorMenu();
+            this._openLevelView(newLevel);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
             
             this._audio.playEffect("build_01");
         });
@@ -769,7 +1039,15 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
                         finalSongName = `NG#${extracted.customSongId}`;
                     } else {
                         finalSongId = -extracted.officialSongId -1;
+<<<<<<< HEAD
                         finalSongName = this._officialSongInfo(extracted.officialSongId).name;
+=======
+                        try {
+                            finalSongName = window.allLevels[extracted.officialSongId][1];
+                        } catch(e) {
+                            finalSongName = "Unknown";
+                        }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
                     }
 
                     const rawLevels = localStorage.getItem("created_levels");
@@ -793,10 +1071,15 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
                     createdLevels.push(newLevel);
                     localStorage.setItem("created_levels", JSON.stringify(createdLevels));
                     
+<<<<<<< HEAD
                     this._runBlackPageTransition(() => {
                         this._closeEditorMenu(false);
                         this._openLevelView(newLevel);
                     });
+=======
+                    this._closeEditorMenu(false);
+                    this._openLevelView(newLevel);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 
                 } catch (err) {
                     console.error("GMD Import Error:", err);
@@ -1001,7 +1284,11 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         const shareBtn = this.add.image(centerX + 220, btnY, "GJ_GameSheet03", "GJ_shareBtn_001.png").setInteractive().setFlipY(true).setAngle(90).setScale(1.1);
         this._makeBouncyButton(shareBtn, 1.1, () => { this._exportGMD(level); });
         const backBtn = this.add.image(50, 48, "GJ_GameSheet03", "GJ_arrow_03_001.png").setFlipX(true).setFlipY(true).setRotation(Math.PI).setInteractive();
+<<<<<<< HEAD
         this._makeBouncyButton(backBtn, 1, () => { this._runBlackPageTransition(() => { cleanup(); this._openEditorMenu(); }); });
+=======
+        this._makeBouncyButton(backBtn, 1, () => { cleanup(); this._openEditorMenu(); });
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         const deleteBtn = this.add.image(sw - 50, 48, "GJ_GameSheet03", "GJ_deleteBtn_001.png").setInteractive().setFlipY(true).setAngle(90).setScale(0.8);
         this._makeBouncyButton(deleteBtn, 0.8, () => { deleteLevel(); });
 
@@ -1016,14 +1303,22 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         const songIcon = this.add.image(centerX - 160, footerY, "GJ_GameSheet03", "GJ_musicIcon_001.png").setScale(1).setDepth(152);
         const songLabel = this.add.bitmapText(centerX - 115, footerY, "bigFont", level.song, 29).setOrigin(0, 0.5).setDepth(152);
         const statusIcon = this.add.image(centerX + 200, footerY, "GJ_GameSheet03", "GJ_infoIcon_001.png").setScale(1).setDepth(152).setFlipY(true).setAngle(90);
+<<<<<<< HEAD
         const statusLabel = this.add.bitmapText(centerX + 245, footerY, "bigFont", this._getCreatedLevelStatusText(level), 33).setOrigin(0, 0.5).setDepth(152);
+=======
+        const statusLabel = this.add.bitmapText(centerX + 245, footerY, "bigFont", level.status, 33).setOrigin(0, 0.5).setDepth(152);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         const versionText = this.add.bitmapText(centerX - 180, subFooterY, "goldFont", `Version: ${level.version || 1}`, 30).setOrigin(0.5).setDepth(152);
         const idText = this.add.bitmapText(centerX + 180, subFooterY, "goldFont", `ID: ${level.levelId || "na"}`, 30).setOrigin(0.5).setDepth(152);
 
         container.add([nameBox, titleText, titleCursor, descBox, descText, descCursor, playBtn, editBtn, shareBtn, backBtn, deleteBtn, lengthIcon, lengthLabel, songIcon, songLabel, statusIcon, statusLabel, versionText, idText]);
     };
+<<<<<<< HEAD
     this._startCreatedLevel = async (level, isEditor, options = {}) => {
         this._clearActiveSavedLevelReturnData();
+=======
+    this._startCreatedLevel = async (level, isEditor) => {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         const PROXY_BASE = (window._gdProxyUrl || "").replace(/\/$/, "");
         window._onlineLevelString = level.levelString;
         window._onlineLevelName = level.levelName;
@@ -1031,11 +1326,17 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         window._onlineSongBuffer = null;
         window._onlineSongKey = null;
         window._onlineSongOffset = 0;
+<<<<<<< HEAD
         window._createdLevelReturnId = level.createdId;
         window._createdLevelPlaytestFromMyLevels = !isEditor;
         window.isEditor = !!isEditor;
         this.game.registry.remove("editorReturnToLevelDetails");
         if (window.isEditor) this._audio.stopMusic();
+=======
+        if (isEditor){
+          window.isEditor = true;
+        }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         this.game.registry.set("autoStartGame", true);
         window.currentlevel = [
             "Placeholder",
@@ -1044,9 +1345,14 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
             ["Local", "SongAuthor"]
         ];
         if (level.songId < 0){
+<<<<<<< HEAD
           const officialSong = this._officialSongInfo(Math.abs(level.songId) - 1);
           window.currentlevel[0] = officialSong.key;
           window.currentlevel[3] = ["Local", officialSong.author];
+=======
+          window.currentlevel[0] = window.allLevels[Math.abs(level.songId) - 1][0];
+          window.currentlevel[3] = ["Local", window.allLevels[Math.abs(level.songId) - 1][3]]
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         } else {
           const songId = level.songId;
           const songKey = `ng_song_${songId}`;
@@ -1090,12 +1396,16 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
               }
           }
         }
+<<<<<<< HEAD
         const restartScene = () => this._restartSceneWithBlackTransition(options.fade ? 260 : 0);
         if (options.fade) {
           restartScene();
         } else {
           restartScene();
         }
+=======
+        this.scene.restart();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     };
     this._closeEditorMenu = () => {
         if (this._editorObjects) {
@@ -1251,6 +1561,26 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
           }
         } else if (event.key === "Enter") {
           _doSearch();
+<<<<<<< HEAD
+=======
+          } else if (event.ctrlKey || event.metaKey) {
+          if (event.key === "c" || event.key === "C") {
+            event.preventDefault();
+            navigator.clipboard.writeText(inputText);
+          } else if (event.key === "v" || event.key === "V") {
+            event.preventDefault();
+            navigator.clipboard.readText().then(pastedText => {
+              const filtered = pastedText.split('').filter(c => allowedChars.includes(c)).join('');
+              if (filtered.length > 0) {
+                const availableSpace = inputMaxLen - inputText.length;
+                inputText += filtered.slice(0, availableSpace);
+                _updateInputDisplay();
+              }
+            }).catch(() => {});
+          } else if (event.key === "a" || event.key === "A") {
+            event.preventDefault();
+          }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         } else if (event.key.length === 1 && allowedChars.includes(event.key) && !event.ctrlKey) {
           if (inputText.length < inputMaxLen) {
             inputText += event.key;
@@ -1330,6 +1660,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         if (!rawResponse || rawResponse === "-1" || !rawResponse.includes(":")) {
           return;
         }
+<<<<<<< HEAD
         const gdMap = {};
         const _gdMatches = [...rawResponse.matchAll(/(?:^|:)(\d+):/g)];
         for (let i = 0; i < _gdMatches.length; i++) {
@@ -1394,6 +1725,239 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         window.currentlevel = [
           songKey,
           levelName,
+=======
+
+        const responseSegments = rawResponse.split("#");
+        const lvlParts = responseSegments[0].split(":");
+        const lvlMap = {};
+        for (let i = 0; i + 1 < lvlParts.length; i += 2) {
+          lvlMap[lvlParts[i]] = lvlParts[i + 1];
+        }
+
+        const levelData = {
+          // Core Level Info
+          id:             lvlMap["1"] || levelId,
+          title:          (lvlMap["2"] || "Online Level").trim(),
+          description:    lvlMap["3"] ? atob(lvlMap["3"].replace(/-/g, '+').replace(/_/g, '/')) : "", // Base64 decoded
+          string:         lvlMap["4"] || null, // The raw level data string
+          version:        parseInt(lvlMap["5"]) || 1,
+          
+          // User / Author Info
+          playerID:       lvlMap["6"] || null,
+          accountID:      lvlMap["57"] || null, // The author's accountID returned by the server
+
+          // Song Info
+          officialSong:   lvlMap["12"] || "0",
+          customSongID:   (lvlMap["35"] || "").trim(),
+          isCustomSong:   !!(lvlMap["35"] || "").trim() && (lvlMap["35"] || "").trim() !== "0",
+          isLibrarySong:  !!(lvlMap["35"] || "").trim() && (lvlMap["35"] || "").trim() !== "0" && parseInt((lvlMap["35"] || "").trim()) >= 1000000,
+          offset:         parseFloat(lvlMap["45"] || "0") || 0,
+
+          // Gameplay Details
+          difficulty:     parseInt(lvlMap["9"]) || 0, // Auto, Easy, Normal, Hard, Harder, Insane
+          stars:          parseInt(lvlMap["18"]) || 0,
+          diamonds:       parseInt(lvlMap["46"]) || 0,
+          orbs:           parseInt(lvlMap["48"]) || 0,
+          length:         parseInt(lvlMap["15"]) || 0, // 0=Tiny, 1=Small, 2=Medium, 3=Long, 4=XL, 5=Platformer
+          gameVersion:    parseInt(lvlMap["13"]) || 22, // The game version the level was created in (e.g. 22 = 2.2)
+          binaryVersion:  parseInt(lvlMap["52"]) || 0,  // The build version used to upload
+
+          // Meta / Social Counters
+          downloads:      parseInt(lvlMap["10"]) || 0,
+          likes:          parseInt(lvlMap["14"]) || 0,
+          objects:        parseInt(lvlMap["45"]) || 0, // Object count (Note: 45 can double as audio offset or object count depending on context)
+          ts:             lvlMap["28"] || null, // Upload/Update timestamp hint
+          
+          // Technical / Security Verification keys sent back by server
+          chk:            lvlMap["chk"] || null,
+          rs:             lvlMap["rs"] || null
+        };
+        console.groupCollapsed("level data");
+        const { string, ...tableFriendlyData } = levelData;
+        console.table(tableFriendlyData);
+        console.groupEnd();
+
+        const songKey = levelData.isCustomSong 
+          ? (levelData.isLibrarySong ? `lib_song_${levelData.customSongID}` : `ng_song_${levelData.customSongID}`) 
+          : window.allLevels[levelData.officialSong][0];
+          
+        window.currentlevel[0] = songKey;
+        window._onlineSongOffset = levelData.offset;
+        
+        if (levelData.isCustomSong) {
+          window._onlineSongBuffer = null; 
+          window._onlineSongKey    = null;
+            const ngRes = await fetch(`${PROXY_BASE}/getGJSongInfo.php`, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `songID=${levelData.customSongID}&secret=Wmfd2893gb7`
+            });
+            const ngText = ngRes.ok ? await ngRes.text() : "-1";
+
+            if (ngText && ngText !== "-1") {
+                const ngParts = ngText.split("~|~");
+                const ngMap = {};
+                for (let i = 0; i + 1 < ngParts.length; i += 2) ngMap[ngParts[i]] = ngParts[i + 1];
+
+                const songData = {
+                    id:           ngMap["1"] || levelData.customSongID,
+                    title:        (ngMap["2"] || "Unknown").trim(),
+                    artistID:     ngMap["3"] || "0",
+                    artistName:   (ngMap["4"] || "Unknown").trim(),
+                    sizeMB:       ngMap["5"] || "0",
+                    videoID:      ngMap["6"] || null,
+                    youtubeURL:   ngMap["7"] ? decodeURIComponent(ngMap["7"]) : null,
+                    isScouted:    ngMap["8"] === "1",
+                    priority:     ngMap["9"] || "0",
+                    rawUrl:       (ngMap["10"] || "").trim(),
+                    nongType:     parseInt(ngMap["11"] || "0"),
+                    //extraIDs:     (ngMap["12"] || "").split("."), //array
+                    isNew:        ngMap["13"] === "1",
+                    newIconType:  ngMap["14"] || "0",
+                    extraArtists: ngMap["15"] || "" 
+                };
+
+                const isNCS = levelData.isLibrarySong || songData.nongType === 1;
+                let songUrl = songData.rawUrl ? decodeURIComponent(songData.rawUrl) : null;
+                
+                if (!songUrl && isNCS) {
+                  const songId = levelData.customSongID;
+                  const path = `/music/${songId}.mp3`;
+                      
+                  function generateCdnAuth(path) {
+                      const SALT = "8501f9c2-75ba-4230-8188-51037c4da102";
+                      const expires = Math.floor(Date.now() / 1000) + 3600;
+                      const inputString = `${SALT}${path}${expires}`;
+
+                      const md5Cycle = (x, k) => {
+                          let a = x[0], b = x[1], c = x[2], d = x[3];
+                          const f = (p, q, r, s, x, sft, t) => {
+                              let val = p + (q & r | ~q & s) + x + t;
+                              return ((val << sft) | (val >>> (32 - sft))) + q;
+                          };
+                          const g = (p, q, r, s, x, sft, t) => {
+                              let val = p + (q & s | r & ~s) + x + t;
+                              return ((val << sft) | (val >>> (32 - sft))) + q;
+                          };
+                          const h = (p, q, r, s, x, sft, t) => {
+                              let val = p + (q ^ r ^ s) + x + t;
+                              return ((val << sft) | (val >>> (32 - sft))) + q;
+                          };
+                          const i = (p, q, r, s, x, sft, t) => {
+                              let val = p + (r ^ (q | ~s)) + x + t;
+                              return ((val << sft) | (val >>> (32 - sft))) + q;
+                          };
+
+                          a = f(a, b, c, d, k[0], 7, -680876936); d = f(d, a, b, c, k[1], 12, -389564586);
+                          c = f(c, d, a, b, k[2], 17, 606105819); b = f(b, c, d, a, k[3], 22, -1044525330);
+                          a = f(a, b, c, d, k[4], 7, -176418897); d = f(d, a, b, c, k[5], 12, 1200080426);
+                          c = f(c, d, a, b, k[6], 17, -1473231341); b = f(b, c, d, a, k[7], 22, -45705983);
+                          a = f(a, b, c, d, k[8], 7, 1770035416); d = f(d, a, b, c, k[9], 12, -1958414417);
+                          c = f(c, d, a, b, k[10], 17, -42063); b = f(b, c, d, a, k[11], 22, -1990404162);
+                          a = f(a, b, c, d, k[12], 7, 1804603682); d = f(d, a, b, c, k[13], 12, -40341101);
+                          c = f(c, d, a, b, k[14], 17, -1502002290); b = f(b, c, d, a, k[15], 22, 1236535329);
+
+                          a = g(a, b, c, d, k[1], 5, -165796510); d = g(d, a, b, c, k[6], 9, -1069501632);
+                          c = g(c, d, a, b, k[11], 14, 643717713); b = g(b, c, d, a, k[0], 20, -373897302);
+                          a = g(a, b, c, d, k[5], 5, -701558691); d = g(d, a, b, c, k[10], 9, 38016083);
+                          c = g(c, d, a, b, k[15], 14, -660478335); b = g(b, c, d, a, k[4], 20, -405537848);
+                          a = g(a, b, c, d, k[9], 5, 568446438); d = g(d, a, b, c, k[14], 9, -1019803690);
+                          c = g(c, d, a, b, k[3], 14, -187363961); b = g(b, c, d, a, k[8], 20, 1163531501);
+                          a = g(a, b, c, d, k[13], 5, -1444681467); d = g(d, a, b, c, k[2], 9, -51403784);
+                          c = g(c, d, a, b, k[7], 14, 1735328473); b = g(b, c, d, a, k[12], 20, -1926607734);
+
+                          a = h(a, b, c, d, k[5], 4, -378558); d = h(d, a, b, c, k[8], 11, -2022574463);
+                          c = h(c, d, a, b, k[11], 16, 1839030562); b = h(b, c, d, a, k[14], 23, -35309556);
+                          a = h(a, b, c, d, k[1], 4, -1530992060); d = h(d, a, b, c, k[4], 11, 1272893353);
+                          c = h(c, d, a, b, k[7], 16, -155497632); b = h(b, c, d, a, k[10], 23, -1094730640);
+                          a = h(a, b, c, d, k[13], 4, 681279174); d = h(d, a, b, c, k[0], 11, -358537222);
+                          c = h(c, d, a, b, k[3], 16, -722521979); b = h(b, c, d, a, k[6], 23, 76029189);
+                          a = h(a, b, c, d, k[9], 4, -640364487); d = h(d, a, b, c, k[12], 11, -421815835);
+                          c = h(c, d, a, b, k[15], 16, 530742520); b = h(b, c, d, a, k[2], 23, -995338651);
+
+                          a = i(a, b, c, d, k[0], 6, -198630844); d = i(d, a, b, c, k[7], 10, 1126891415);
+                          c = i(c, d, a, b, k[14], 15, -1416354905); b = i(b, c, d, a, k[5], 21, -57434055);
+                          a = i(a, b, c, d, k[12], 6, 1700485571); d = i(d, a, b, c, k[3], 10, -1894986606);
+                          c = i(c, d, a, b, k[10], 15, -1051523); b = i(b, c, d, a, k[1], 21, -2054922799);
+                          a = i(a, b, c, d, k[8], 6, 1873313359); d = i(d, a, b, c, k[15], 10, -30611744);
+                          c = i(c, d, a, b, k[6], 15, -1560198380); b = i(b, c, d, a, k[13], 21, 1309151649);
+                          a = i(a, b, c, d, k[4], 6, -145523070); d = i(d, a, b, c, k[11], 10, -1120210379);
+                          c = i(c, d, a, b, k[2], 15, 718787259); b = i(b, c, d, a, k[9], 21, -343485551);
+
+                          x[0] = (x[0] + a) | 0; x[1] = (x[1] + b) | 0;
+                          x[2] = (x[2] + c) | 0; x[3] = (x[3] + d) | 0;
+                      };
+
+                      const md5Raw = (str) => {
+                          let n = str.length, state = [1732584193, -271733879, -1732584194, 271733878], i;
+                          let words = [];
+                          for (i = 0; i <= n; i++) words[i >> 2] |= (str.charCodeAt(i) || 128) << ((i % 4) << 3);
+                          words[(((n + 8) >> 6) << 4) + 14] = n * 8;
+                          for (i = 0; i < words.length; i += 16) md5Cycle(state, words.slice(i, i + 16));
+                          return state.map(val => [val & 0xFF, (val >> 8) & 0xFF, (val >> 16) & 0xFF, (val >> 24) & 0xFF]).flat();
+                      };
+
+                      const hashBytes = md5Raw(inputString);
+                      const binaryStr = String.fromCharCode(...hashBytes);
+                      const token = btoa(binaryStr)
+                          .replace(/\+/g, '-')
+                          .replace(/\//g, '_')
+                          .replace(/=+$/, '');
+
+                      return { token, expires };
+                  }
+
+                  const auth = generateCdnAuth(path);
+
+                  songUrl = `https://geometrydashfiles.b-cdn.net${path}?token=${auth.token}&expires=${auth.expires}`;
+                }
+                
+                console.groupCollapsed("song data");
+                console.table({ ...songData});
+                console.log(songUrl);
+                console.groupEnd();
+
+                if (songUrl) {
+                  const audioCtx = this.game.sound.context;
+                  if (audioCtx.state === "suspended") await audioCtx.resume();
+
+                  window._onlineSongKey    = songKey;
+                  window._onlineSongTitle  = songData.title;
+                  window._onlineSongArtist = songData.artistName;
+
+                  try {
+                      const proxiedUrl = `${PROXY_BASE}/audio-proxy?url=${encodeURIComponent(songUrl)}`;
+                      const audioRes = await fetch(proxiedUrl);
+                      
+                      if (!audioRes.ok) throw new Error(`audio proxy returned ${audioRes.status}`);
+
+                      const arrayBuf = await audioRes.arrayBuffer();
+                      const decoded  = await audioCtx.decodeAudioData(arrayBuf);
+
+                      window._onlineSongBuffer = decoded;
+                  } catch (error) {
+                      console.error("Failed to load audio via proxy:", error.message);
+                      
+                      window._onlineSongBuffer = null;
+                  }
+              } else {
+              }
+            } else {
+                _showStatus("Song info failed to load", "#ff0000");
+            }
+        } else {
+          window._onlineSongBuffer = null;
+          window._onlineSongKey    = null;
+          window._onlineSongArtist = null;
+        }
+        window._onlineLevelString = levelData.string;
+        window._onlineLevelName   = levelData.title;
+        window._onlineLevelId     = "online_" + levelData.id;
+        this.game.registry.set("autoStartGame", true);
+        window.currentlevel = [
+          songKey,
+          window._onlineLevelName,
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
           window._onlineLevelId,
           [window._onlineSongArtist || "Unknown"]
         ];
@@ -1407,7 +1971,11 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
           flash.fillRect(0, 0, sw, sh);
           this.tweens.add({
             targets: flash, alpha: 1, duration: 250, ease: "Linear",
+<<<<<<< HEAD
             onComplete: () => this._restartSceneWithBlackTransition(0)
+=======
+            onComplete: () => this.scene.restart()
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
           });
         });
       };
@@ -1465,6 +2033,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     };
     this._makeBouncyButton(this._creatorBtn, 1, () => {
       this._openCreatorMenu();
+<<<<<<< HEAD
       if (this._creatorBtn) {
         this.tweens.killTweensOf(this._creatorBtn);
         this._creatorBtn.y = 320;
@@ -1478,12 +2047,15 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
           repeat: -1
         });
       }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     }, () => this._menuActive && !this._levelSelectOverlay);
       //icon stufff
     this._iconBtn = this.add.image(0, 0, "GJ_GameSheet03", "GJ_garageBtn_001.png").setScrollFactor(0).setDepth(30).setInteractive().setScale(1);
     this._iconBtnSelected = false;
     this._makeBouncyButton(this._iconBtn, 1, () => {
       this._openIconSelector();
+<<<<<<< HEAD
       if (this._iconBtn) {
         this.tweens.killTweensOf(this._iconBtn);
         this._iconBtn.y = 320;
@@ -1497,6 +2069,8 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
           repeat: -1
         });
       }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     }, () => this._menuActive && !this._levelSelectOverlay);
 
     this._iconOverlay = null;
@@ -1670,15 +2244,25 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
   }
       this._iconOverlayObjects.push(topBar);
 
+<<<<<<< HEAD
       const cols = 10;
       const iconSize = 60;
       const padding = 18;
+=======
+      const cols = 12;
+      const iconSize = 60;
+      const padding = 2;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       const containerPadding = 10;
       const rows = 3;
       const containerWidth  = cols * iconSize + (cols - 1) * padding + 12;
       const containerHeight = rows * iconSize + (rows - 1) * padding + 12;
       const containerX = sw / 2 - containerWidth / 2;
+<<<<<<< HEAD
       const containerY = sh - containerHeight - containerPadding - 130;
+=======
+      const containerY = sh - containerHeight - containerPadding - 150;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       const startX = containerX + 6 + iconSize / 2;
       const startY = containerY + 6 + iconSize / 2;
 
@@ -1689,12 +2273,19 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
 
       const cornerTL = this.add.image(0,  0,  "GJ_GameSheet03", "GJ_sideArt_001.png").setScrollFactor(0).setDepth(100).setOrigin(1, 0).setFlipX(false).setAngle(-90)
       const cornerTR = this.add.image(sw, 0,  "GJ_GameSheet03", "GJ_sideArt_001.png").setScrollFactor(0).setDepth(103).setOrigin(0, 0).setFlipY(false).setFlipX(true).setAngle(90);
+<<<<<<< HEAD
       const cornerBR = this.add.image(sw, sh, "GJ_GameSheet03", "GJ_sideArt_001.png").setScrollFactor(0).setDepth(152).setOrigin(1, 0).setFlipY(false).setAngle(90);
       const cornerBL = this.add.image(0,  sh, "GJ_GameSheet03", "GJ_sideArt_001.png").setScrollFactor(0).setDepth(152).setOrigin(1, 1).setFlipY(true).setAngle(90)
       this._iconOverlayObjects.push(cornerTL, cornerTR, cornerBR, cornerBL);
 
       const navDotSpacing = 35;
       const navDotY = containerY + containerHeight + 26;
+=======
+      this._iconOverlayObjects.push(cornerTL, cornerTR);
+
+      const navDotSpacing = 35;
+      const navDotY = containerY + containerHeight + 30;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       const navDot1 = this.add.image(sw / 2 - navDotSpacing / 2, navDotY, "GJ_GameSheet03", "gj_navDotBtn_on_001.png").setScrollFactor(0).setDepth(104).setScale(0.75);
       const navDot2 = this.add.image(sw / 2 + navDotSpacing / 2, navDotY, "GJ_GameSheet03", "gj_navDotBtn_off_001.png").setScrollFactor(0).setDepth(104).setScale(0.75);
       const navDot3 = this.add.image(sw / 2 + navDotSpacing / 2, navDotY, "GJ_GameSheet03", "gj_navDotBtn_off_001.png").setScrollFactor(0).setDepth(104).setScale(0.75).setVisible(false);
@@ -1735,9 +2326,15 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
       ];
 
       const colorBtnSize = 35;
+<<<<<<< HEAD
       const colorPadding = 4;
       const colorRowWidth = rainbowColors.length * (colorBtnSize + colorPadding) - colorPadding;
       const colorRow1Y = containerY + containerHeight + 70;
+=======
+      const colorPadding = 6;
+      const colorRowWidth = rainbowColors.length * (colorBtnSize + colorPadding) - colorPadding;
+      const colorRow1Y = containerY + containerHeight + 88;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       const colorRow2Y = colorRow1Y + colorBtnSize + 10;
       const colorRowStartX = sw / 2 - colorRowWidth / 2 + colorBtnSize / 2;
 
@@ -1749,20 +2346,54 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         fontSize: "11px", color: "#ffffff", fontFamily: "Arial"}).setScrollFactor(0).setDepth(104).setOrigin(0, 0.5).setAlpha(1);
       this._iconOverlayObjects.push(colorLabel2);
 
+<<<<<<< HEAD
+=======
+      const colorBoxWidth = sw;
+      const colorBoxHeight = colorBtnSize * 2 + 10 + 20;
+      const colorBoxX = 0;
+      const colorBoxY = colorRow1Y - colorBtnSize / 2 - 10;
+      const colorBox = this.add.graphics().setScrollFactor(0).setDepth(101);
+      colorBox.fillStyle(0x000000, 0.5);
+      colorBox.fillRect(colorBoxX, colorBoxY, colorBoxWidth, colorBoxHeight);
+      this._iconOverlayObjects.push(colorBox);
+
+      const color1SelLabel = this.add.image(0, 0, "GJ_GameSheet03", "GJ_select_001.png").setScrollFactor(0).setDepth(106).setOrigin(0.5, 0.5).setVisible(false).setScale(0.6);
+      const color2SelLabel = this.add.image(0, 0, "GJ_GameSheet03", "GJ_select_001.png").setScrollFactor(0).setDepth(106).setOrigin(0.5, 0.5).setVisible(false).setScale(0.6);
+      this._iconOverlayObjects.push(color1SelLabel, color2SelLabel);
+
+      const _moveColorSelect = (label, color, rowY) => {
+        const idx = rainbowColors.indexOf(color);
+        if (idx === -1) {
+          label.setVisible(false);
+          return;
+        }
+
+        label.setPosition(colorRowStartX + idx * (colorBtnSize + colorPadding), rowY).setVisible(true);
+      };
+
+      _moveColorSelect(color1SelLabel, window.mainColor, colorRow1Y);
+      _moveColorSelect(color2SelLabel, window.secondaryColor, colorRow2Y);
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       for (let ci = 0; ci < rainbowColors.length; ci++) {
         const cx = colorRowStartX + ci * (colorBtnSize + colorPadding);
 
         const btn1AtlasInfo = getAtlasFrame(this, "GJ_colorBtn_001.png");
         let btn1;
+<<<<<<< HEAD
         if (btn1AtlasInfo) {
           btn1 = this.add.image(cx, colorRow1Y, btn1AtlasInfo.atlas, btn1AtlasInfo.frame).setScrollFactor(0).setDepth(104).setTint(rainbowColors[ci]).setScale(0.5).setInteractive();
         } else {
           btn1 = this.add.rectangle(cx, colorRow1Y, colorBtnSize, colorBtnSize, rainbowColors[ci]).setScrollFactor(0).setDepth(104).setInteractive();
         }
+=======
+        btn1 = this.add.rectangle(cx, colorRow1Y, colorBtnSize, colorBtnSize, rainbowColors[ci]).setScrollFactor(0).setDepth(104).setInteractive();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         this._iconOverlayObjects.push(btn1);
 
         const btn2AtlasInfo = getAtlasFrame(this, "GJ_colorBtn_001.png");
         let btn2;
+<<<<<<< HEAD
         if (btn2AtlasInfo) {
           btn2 = this.add.image(cx, colorRow2Y, btn2AtlasInfo.atlas, btn2AtlasInfo.frame).setScrollFactor(0).setDepth(104).setTint(rainbowColors[ci]).setScale(0.5).setInteractive();
         } else {
@@ -1776,6 +2407,16 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
           b1.on("pointerup",   () => {
             window.mainColor = color;
             localStorage.setItem("iconMainColor", hexadecimalToHex(color));
+=======
+        btn2 = this.add.rectangle(cx, colorRow2Y, colorBtnSize, colorBtnSize, rainbowColors[ci]).setScrollFactor(0).setDepth(104).setInteractive();
+        this._iconOverlayObjects.push(btn2);
+
+        ((color, b1, b2) => {
+          this._makeBouncyButton(b1, 1.0, () => {
+            window.mainColor = color;
+            localStorage.setItem("iconMainColor", hexadecimalToHex(color));
+            _moveColorSelect(color1SelLabel, color, colorRow1Y);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
             if (this._player) {
               const safeSetTint = (sprite, color) => {
                 if (sprite && sprite.setTint) {
@@ -1803,12 +2444,19 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
             }
             selectedIcon.setTint(color);
           });
+<<<<<<< HEAD
 
           b2.on("pointerover", () => b2.setAlpha(0.7));
           b2.on("pointerout",  () => b2.setAlpha(1));
           b2.on("pointerup",   () => {
             window.secondaryColor = color;
             localStorage.setItem("iconSecondaryColor", hexadecimalToHex(color));
+=======
+          this._makeBouncyButton(b2, 1.0, () => {
+            window.secondaryColor = color;
+            localStorage.setItem("iconSecondaryColor", hexadecimalToHex(color));
+            _moveColorSelect(color2SelLabel, color, colorRow2Y);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
             if (this._player) {
               const safeSetTint = (sprite, color) => {
                 if (sprite && sprite.setTint) {
@@ -1834,8 +2482,13 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
                 }
               }
             }
+<<<<<<< HEAD
                 selectedIconExtra.setTint(window.secondaryColor);
                 _refreshPreview(currentTab, _getPreviewFrame(currentTab));
+=======
+            selectedIconExtra.setTint(window.secondaryColor);
+            _refreshPreview(currentTab, _getPreviewFrame(currentTab));
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
           });
         })(rainbowColors[ci], btn1, btn2);
       }
@@ -1869,11 +2522,26 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
       this._iconOverlayObjects.push(selectedIconExtra, selectedIcon);
 
       const tabBtnY = containerY - 40;
+<<<<<<< HEAD
       const tabKeys = ["icon", "ship", "ball", "wave", "ufo"];
       const tabOffsets     = [-218, -109,  0,    109,   218  ];
       const tabRotations   = { icon: -Math.PI/2, ship: 0, ball: -Math.PI/2, wave: Math.PI/2, ufo: Math.PI/2 };
       const tabFlipXStates = { icon: true, ship: false, ball: true, wave: false, ufo: false };
       const tabFlipYStates = { icon: false, ship: false, ball: false, wave: true, ufo: true };
+=======
+      const tabKeys = ["icon", "ship", "ball", "ufo", "wave"];
+      const tabSpacing = 65;
+      const tabOffsets = {
+        icon: -tabSpacing * 2,
+        ship: -tabSpacing,
+        ball: 0,
+        ufo: tabSpacing,
+        wave: tabSpacing * 2,
+      };
+      const tabRotations = { icon: -Math.PI/2, ship: 0, ball: -Math.PI/2, ufo: Math.PI/2, wave: Math.PI/2 };
+      const tabFlipXStates = { icon: true, ship: false, ball: true, ufo: false, wave: false };
+      const tabFlipYStates = { icon: false, ship: false, ball: false, ufo: true, wave: true };
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       const tabBtnSprites  = {};
 
       const _switchTab = (tab) => {
@@ -1889,7 +2557,11 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
 
       tabKeys.forEach((tab, i) => {
         const isActive = tab === startTab;
+<<<<<<< HEAD
         const btn = this.add.image(sw / 2 + tabOffsets[i], tabBtnY, "GJ_GameSheet03",
+=======
+        const btn = this.add.image(sw / 2 + tabOffsets[tab], tabBtnY, "GJ_GameSheet03",
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
             isActive ? _tabBtnFrames[tab].on : _tabBtnFrames[tab].off)
           .setScrollFactor(0).setDepth(104).setScale(0.75)
           .setRotation(tabRotations[tab]).setFlipX(tabFlipXStates[tab]).setFlipY(tabFlipYStates[tab])
@@ -1968,6 +2640,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
           }
 
           ((capturedFrame, capturedImg, capturedExtra, capturedOrigScale) => {
+<<<<<<< HEAD
             hitRect.on("pointerover",  () => { capturedImg.setAlpha(0.65); if (capturedExtra) capturedExtra.setAlpha(0.65); });
             hitRect.on("pointerout",   () => {
               capturedImg.setAlpha(1); capturedImg.setScale(capturedOrigScale);
@@ -1978,6 +2651,25 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
               capturedImg.setScale(capturedOrigScale);
               capturedImg.setAlpha(1);
               if (capturedExtra) { capturedExtra.setScale(capturedOrigScale); capturedExtra.setAlpha(1); }
+=======
+            const bouncedScale = capturedOrigScale * 1.26;
+            const iconTargets = capturedExtra ? [capturedImg, capturedExtra] : [capturedImg];
+            hitRect.on("pointerdown", () => {
+              hitRect._pressed = true;
+              iconTargets.forEach(t => this.tweens.killTweensOf(t, "scale"));
+              iconTargets.forEach(t => this.tweens.add({ targets: t, scale: bouncedScale, duration: 300, ease: "Bounce.Out" }));
+            });
+            hitRect.on("pointerout", () => {
+              if (hitRect._pressed) {
+                hitRect._pressed = false;
+                iconTargets.forEach(t => this.tweens.killTweensOf(t, "scale"));
+                iconTargets.forEach(t => this.tweens.add({ targets: t, scale: capturedOrigScale, duration: 400, ease: "Bounce.Out" }));
+              }
+            });
+            hitRect.on("pointerup",    () => {
+              hitRect._pressed = false;
+              iconTargets.forEach(t => { this.tweens.killTweensOf(t); t.setScale(capturedOrigScale); });
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
               if (!this._iconOverlay) return;
 
               selLabel.setPosition(capturedImg.x, capturedImg.y).setScale(0.75).setVisible(true);
@@ -2138,7 +2830,11 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     };
     this._closeCreatorMenu = (silent = false) => {
       if (!this._creatorOverlay) return;
+<<<<<<< HEAD
       this._creatorMenuOpen = false;
+=======
+      if (silent == false) this._creatorMenuOpen = false;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       const destroy = () => {
         if (this._creatorOverlayObjects) {
           for (const obj of this._creatorOverlayObjects) {
@@ -2168,6 +2864,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
   this._iconBtn.x = (screenWidth / 2) - this._playBtn.width / 2 - 50 - (this._iconBtn.width * this._iconBtn.scaleX) / 2;
   this.tweens.killTweensOf(this._iconBtn, "y");
   this._iconBtn.y = 320;
+<<<<<<< HEAD
   this.tweens.add({
     targets: this._iconBtn,
     y: 324,
@@ -2178,10 +2875,16 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
   });
 }
     // creator stuff the sequel
+=======
+  if (this._chrSelDecor) this._chrSelDecor.destroy();
+  this._chrSelDecor = this.add.image(this._iconBtn.x - 110, this._iconBtn.y - (this._iconBtn.height * this._iconBtn.scaleY) / 2 + 160, "GJ_GameSheet03", "GJ_chrSel_001.png").setScrollFactor(0).setDepth(31);
+}
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     if (this._creatorBtn) {
   this._creatorBtn.x = (screenWidth / 2) + this._playBtn.width / 2 + 50 + (this._creatorBtn.width * this._creatorBtn.scaleX) / 2;
   this.tweens.killTweensOf(this._creatorBtn, "y");
   this._creatorBtn.y = 320;
+<<<<<<< HEAD
   this.tweens.add({
     targets: this._creatorBtn,
     y: 324,
@@ -2190,6 +2893,10 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     yoyo: true,
     repeat: -1
   });
+=======
+  if (this._lvlEditDecor) this._lvlEditDecor.destroy();
+  this._lvlEditDecor = this.add.image(this._creatorBtn.x + 110, this._creatorBtn.y - (this._creatorBtn.height * this._creatorBtn.scaleY) / 2 + 160, "GJ_GameSheet03", "GJ_lvlEdit_001.png").setScrollFactor(0).setDepth(31);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 }
     this._spaceWasDown = false;
     this._spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -2199,7 +2906,10 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     this._leftKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
     this._rightKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
     this._aKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+<<<<<<< HEAD
     this._sKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._dKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
     this._startPosIndex = -1;
@@ -2236,6 +2946,22 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
       .setDepth(100)
       .setVisible(false);
 
+<<<<<<< HEAD
+=======
+    this._cpsIndicator = this.add.bitmapText(10, 70, "bigFont", "0 CPS", 20)
+      .setOrigin(0, 0)
+      .setAlpha(0.4)
+      .setDepth(100)
+      .setVisible(false);
+
+    this._bottedIndicator = this.add.bitmapText(10, 70, "bigFont", "Botted", 20)
+      .setOrigin(0, 0)
+      .setAlpha(0.4)
+      .setDepth(100)
+      .setTint(0xff0000)
+      .setVisible(false);
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this.noclipFlash = this.add.rectangle(
       this.cameras.main.centerX, 
       this.cameras.main.centerY, 
@@ -2267,10 +2993,13 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         this._closeUpdateLogPopup();
         return;
       } 
+<<<<<<< HEAD
       if (this._howToPlayPopup) {
         this._closeHowToPlayPopup();
         return;
       }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       if (this._searchOverlay) {
         this._closeSearchMenu(true);
         this._openCreatorMenu();
@@ -2280,6 +3009,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         this._closeOnlineLevelsScene();
         return;
       }
+<<<<<<< HEAD
       if (this._savedLevelDetailsOverlay) {
         if (this._closeSavedLevelDetailsOverlay) this._closeSavedLevelDetailsOverlay();
         return;
@@ -2288,6 +3018,8 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         this._closeSavedLevelsScene();
         return;
       }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       if (this._creatorOverlay) {
         this._closeCreatorMenu();
         return;
@@ -2297,6 +3029,15 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         this._settingsPopup = null;
         return;
       }
+<<<<<<< HEAD
+=======
+      if (this._macroPopup) {
+        this.events.off("update", this._refreshMacroButtons);
+        this._macroPopup.destroy();
+        this._macroPopup = null;
+        return;
+      }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       if (this._settingsLayerOverlay) {
         if (!this._settingsScreenClosing) {
           this._hideSettingsScreen();
@@ -2304,11 +3045,16 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         return;
       }
       if (this._infoPopup) {
+<<<<<<< HEAD
         this._closeInfoPopup();
         return;
       }
       if (this._vaultPopup) {
         this._closeVaultMenu();
+=======
+        this._infoPopup.destroy();
+        this._infoPopup = null;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         return;
       }
       if (this._newgroundsPopup) {
@@ -2319,6 +3065,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         this._hideStatsScreen();
         return;
       }
+<<<<<<< HEAD
       if (this._editorPlaytesting) {
         this._stopEditorPlaytest({ keepEditorMenuAudioStopped: true });
         this._showEditorPauseMenu(true);
@@ -2342,6 +3089,14 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
           this._showEditorPauseMenu(!this._editorMenuContainer || !this._editorMenuContainer.visible);
           return;
         }
+=======
+      if (this._paused) {
+        this._audio.playEffect("quitSound_01");
+        this._audio.stopMusic();
+        this._resumeGame();
+        this.scene.restart();
+      } else if (!this._menuActive && !this._slideIn && !this._levelWon) {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         this._pauseGame();
       }
     });
@@ -2381,6 +3136,10 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     this._paused = false;
     this._pauseContainer = null;
     this._sfxVolume = localStorage.getItem("userSfxVol") ?? 1;
+<<<<<<< HEAD
+=======
+    this._initMacroBot();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this.input.on("pointerdown", () => {
       if (!this._menuActive && !this._paused && !this._levelSelectOverlay && !this._levelWon && !window.isEditor) {
         this._pushButton();
@@ -2393,11 +3152,19 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     });
     if (!window.gdpointerup) {
       window.gdpointerup = true;
+<<<<<<< HEAD
       window.addEventListener("pointerup", () => this._releaseButton());
     }
     if (!window.gdtouchend) {
       window.gdtouchend = true;
       window.addEventListener("touchend", () => this._releaseButton());
+=======
+      window.addEventListener("pointerup", () => this._releaseButton(true));
+    }
+    if (!window.gdtouchend) {
+      window.gdtouchend = true;
+      window.addEventListener("touchend", () => this._releaseButton(true));
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     }
     this.scale.on("enterfullscreen", () => this._onFullscreenChange(true));
     this.scale.on("leavefullscreen", () => this._onFullscreenChange(false));
@@ -2451,6 +3218,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     const menuMusicEnabled = localStorage.getItem("menuMusicEnabled");
     const shouldPlayMenuMusic = menuMusicEnabled === null ? true : menuMusicEnabled === "true";
     
+<<<<<<< HEAD
     if (window.isEditor) {
       this._audio.stopMusic();
     } else if (!this._audio.isplaying() && shouldPlayMenuMusic) {
@@ -2484,6 +3252,13 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
       sessionStorage.removeItem("webdash_skip_update_log_once");
       window.updateLogShown = true;
     }
+=======
+    if (!this._audio.isplaying() && shouldPlayMenuMusic) {
+      this._audio.startMenuMusic();
+    } else if (this._audio.isplaying() && !shouldPlayMenuMusic) {
+      this._audio.stopMusic();
+    }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     if (!window.updateLogShown) {
       this._buildUpdateLogPopup();
       window.updateLogShown = true;
@@ -2492,6 +3267,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         this._openSearchMenu();
     }
     if (this.game.registry.get("autoStartGame")) {
+<<<<<<< HEAD
       this.game.registry.remove("autoStartGame");
       this._levelLabel.setVisible(false);
       this._leftBtn.setVisible(false);
@@ -2645,6 +3421,28 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         });
       }
     });
+=======
+      if (!window.settingsMap) {
+        const cachedLevelText = this.cache.text.get(window.currentlevel[2]) ||
+          ((window._onlineLevelString && window.currentlevel[2] === window._onlineLevelId) ? window._onlineLevelString : null);
+        if (cachedLevelText) {
+          this._level.loadLevel(cachedLevelText);
+        }
+      }
+      if (window.settingsMap) {
+        this.game.registry.remove("autoStartGame");
+        this._levelLabel.setVisible(false);
+        this._leftBtn.setVisible(false);
+        this._rightBtn.setVisible(false);
+        if (this._practiceModeBarContainer) {
+          this._practiceModeBarContainer.setVisible(this._practicedMode && this._practicedMode.practiceMode);
+        }
+        this._startGame();
+      } else {
+        console.warn("autoStartGame: missing settingsMap for", window.currentlevel && window.currentlevel[2]);
+      }
+    }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   }
   _parseLevelColors(levelId) {
     const LEVEL_COLORS = [
@@ -2694,7 +3492,11 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     const overlay = this.add.graphics().setScrollFactor(0).setDepth(150);
     drawOverlay(overlay, bgHex, isEveryEnd(window.currentlevel[2]));
     this._levelSelectOverlay = overlay;
+<<<<<<< HEAD
     const tableBottom = this.add.image(cx, -24, "GJ_GameSheet03", "GJ_table_bottom_001.png").setScrollFactor(0).setDepth(152).setOrigin(0.5, 0);
+=======
+    const tableBottom = this.add.image(cx, 0, "GJ_GameSheet03", "GJ_topBar_001.png").setScrollFactor(0).setDepth(152).setOrigin(0.5, 0);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const groundY = sh + 175;
     const groundId = (window._groundId || "00");
     const groundFrame = this.textures.getFrame("groundSquare_" + groundId + "_001.png");
@@ -2709,7 +3511,11 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     const staticGroundTiles = [];
     for (let gi = 0; gi < numTiles; gi++) {
       const gt = this.add.image(gi * tileW, groundY, "groundSquare_" + groundId + "_001.png")
+<<<<<<< HEAD
         .setScrollFactor(0).setDepth(152).setOrigin(0, 1).setTint(groundTintHex(groundHex));
+=======
+        .setScrollFactor(0).setDepth(151).setOrigin(0, 1).setTint(groundTintHex(groundHex));
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       staticGroundTiles.push(gt);
     }
     const floorLineFrame = this.textures.getFrame("GJ_WebSheet", "floorLine_01_001.png");
@@ -2717,7 +3523,11 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     const floorLineScale = sw / floorLineW;
     const groundTileH = groundFrame ? groundFrame.height : 80;
     const staticFloorLine = this.add.image(cx, groundY - groundTileH, "GJ_WebSheet", "floorLine_01_001.png")
+<<<<<<< HEAD
       .setScrollFactor(0).setDepth(153).setOrigin(0.5, 0.5).setScale(floorLineScale, 1).setBlendMode(S);
+=======
+      .setScrollFactor(0).setDepth(152).setOrigin(0.5, 0.5).setScale(floorLineScale, 1).setBlendMode(S);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const cornerBL = this.add.image(0,  sh, "GJ_GameSheet03", "GJ_sideArt_001.png").setScrollFactor(0).setDepth(152).setOrigin(1, 1).setFlipY(true).setAngle(90);
     const cornerBR = this.add.image(sw, sh, "GJ_GameSheet03", "GJ_sideArt_001.png").setScrollFactor(0).setDepth(152).setOrigin(1, 0).setFlipY(false).setAngle(90);
     const backBtn = this.add.image(50, 48, "GJ_GameSheet03", "GJ_arrow_01_001.png").setScrollFactor(0).setDepth(154).setFlipX(true).setScale(1, -1).setRotation(Math.PI).setInteractive();
@@ -2873,6 +3683,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
       } else {
         if (ptr.x >= cardX - cardW/2 && ptr.x <= cardX + cardW/2 &&
             ptr.y >= cardY - cardH/2 && ptr.y <= cardY + cardH/2) {
+<<<<<<< HEAD
           this.tweens.killTweensOf(cardBounceContainer, "scale");
           cardBounceContainer.setScale(1);
           this._audio.playEffect("playSound_01", { volume: 1 });
@@ -2880,6 +3691,34 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
           this._audio.stopMusic();
           this.game.registry.set("autoStartGame", true);
           this._restartSceneWithBlackTransition();
+=======
+            
+            this.input.enabled = false;
+            this.tweens.killTweensOf(cardBounceContainer, "scale");
+            cardBounceContainer.setScale(1);
+
+            const lvl = window.currentlevel; 
+            const songID = lvl[0];
+            const levelFileName = lvl[2];
+            const songFileName = lvl[4] ? lvl[4] : lvl[1].replaceAll(" ", "");
+            
+            const loadingText = this.add.bitmapText(cx, cy, "goldFont", "Downloading Level Assets...", 20).setOrigin(0.5).setDepth(200);
+            
+            this.load.text(levelFileName, "assets/levels/" + levelFileName.split("_")[1] + ".txt");
+            this.load.audio(songID, "assets/music/" + songFileName + ".mp3");
+
+            this.load.once("complete", () => {
+                loadingText.destroy();
+                this._audio.playEffect("playSound_01", { volume: 1 });
+                this._closeLevelSelect(true);
+                this._audio.stopMusic();
+                this.input.enabled = true;
+                this.game.registry.set("autoStartGame", true);
+                this.scene.restart(); 
+            });
+
+            this.load.start();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         } else {
           this.tweens.killTweensOf(cardBounceContainer, "scale");
           this.tweens.add({ targets: cardBounceContainer, scale: 1, duration: 200, ease: "Quad.Out" });
@@ -3201,7 +4040,10 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
 
         const leftArrow = this.add.image(-90, 0, "GJ_GameSheet03", "GJ_arrow_01_001.png")
             .setScale(0.6)
+<<<<<<< HEAD
             .setFlipX(false)
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
             .setInteractive();
         
         const rightArrow = this.add.image(90, 0, "GJ_GameSheet03", "GJ_arrow_01_001.png")
@@ -3266,6 +4108,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     }
   }
   _pauseGame() {
+<<<<<<< HEAD
     if (this._editorPlaytesting && !this._paused) {
       this._stopEditorPlaytest({ keepEditorMenuAudioStopped: true });
       this._showEditorPauseMenu(true);
@@ -3282,24 +4125,35 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         this._setParticleTimeScale(0);
         return;
       }
+=======
+    if (!this._paused && !this._menuActive && !this._slideIn && !this._state.isDead && !this._levelWon) {
+      this._paused = true;
+      this._pauseBtn.setVisible(false);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       this._audio.pauseMusic();
       this._setParticleTimeScale(0);
       this._buildPauseOverlay();
     }
   }
   _resumeGame() {
+<<<<<<< HEAD
     if (this._editorPlaytesting && this._paused) {
       this._toggleEditorPlaytestPaused();
       return;
     }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     if (this._paused) {
       this._setParticleTimeScale(1);
       this._paused = false;
       this._pauseBtn.setVisible(true).setAlpha(75 / 255);
+<<<<<<< HEAD
       if (this._editorPlaytesting) {
         this._setEditorUiVisible(false);
         this._createEditorPlaytestControls(false);
       }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       this._audio.resumeMusic();
       this._audio._ensureCorrectMusicMode();
       if (this._pauseContainer) {
@@ -3332,9 +4186,12 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     return _0x4864cc;
   }
 _buildPauseOverlay() {
+<<<<<<< HEAD
     if (this._editorPlaytesting) {
       return;
     }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const textureY = screenWidth / 2;
     const _0xf70e04 = 320;
     const _0x4eb71b = screenWidth - 40;
@@ -3364,6 +4221,13 @@ _buildPauseOverlay() {
     this._pauseContainer.add(settingsBtn);
     this._makeBouncyButton(settingsBtn, 0.64, () => this._buildSettingsPopup());
 
+<<<<<<< HEAD
+=======
+    this._macroBtn = this.add.image(textureY + _0x4eb71b / 2 - 60, 150, "macroBot").setScale(0.4).setInteractive();
+    this._pauseContainer.add(this._macroBtn);
+    this._makeBouncyButton(this._macroBtn, 0.4, () => this._buildMacroPopup());
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._pauseContainer.add(this.add.bitmapText(textureY, 65, "bigFont", window.currentlevel[1], 40).setOrigin(0.5, 0.5));
 
     const _0x21dacf = 170;
@@ -3394,14 +4258,18 @@ _buildPauseOverlay() {
     this._pauseContainer.add(this.add.bitmapText(textureY, _pausePractBarY, "bigFont", _pausePractPct + "%", 30).setOrigin(0.5, 0.5).setScale(0.7));
     this._pauseContainer.add(this.add.bitmapText(textureY, _pausePractBarY - 40, "bigFont", "Practice Mode", 30).setOrigin(0.5, 0.5).setScale(0.78));
 
+<<<<<<< HEAD
     const currentLevelId = String(window.currentlevel && window.currentlevel[2] || "");
     const createdLevelId = currentLevelId.startsWith("local_") ? currentLevelId : null;
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const _0x4791ac = [
         { frame: this._practicedMode.practiceMode ? "GJ_normalBtn_001.png" : "GJ_practiceBtn_001.png", atlas: "GJ_GameSheet03", action: null },
         { frame: "GJ_playBtn2_001.png", atlas: "GJ_WebSheet", action: () => this._resumeGame() },
         { frame: "GJ_menuBtn_001.png", atlas: "GJ_WebSheet", action: () => {
             this._audio.playEffect("quitSound_01");
             this._audio.stopMusic();
+<<<<<<< HEAD
             this._setParticleTimeScale(1);
             this._paused = false;
             if (this._pauseContainer) {
@@ -3412,12 +4280,17 @@ _buildPauseOverlay() {
               return;
             }
             this._returnToMainMenu();
+=======
+            this._resumeGame();
+            this.scene.restart();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         }},
         { frame: "GJ_replayBtn_001.png", atlas: "GJ_WebSheet", action: () => {
             this._resumeGame();
             this._restartLevel();
         }}
     ];
+<<<<<<< HEAD
     if (createdLevelId) {
       _0x4791ac.unshift({
         frame: "GJ_editBtn_001.png",
@@ -3454,17 +4327,24 @@ _buildPauseOverlay() {
     }
 
     const _0x25aa59 = _0x4791ac.map(btn => (this.textures.getFrame(btn.atlas, btn.frame)?.width || 123) * (btn.scale || 1));
+=======
+
+    const _0x25aa59 = _0x4791ac.map(btn => this.textures.getFrame(btn.atlas, btn.frame)?.width || 123);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     let _0x599a9b = textureY - (_0x25aa59.reduce((a, b) => a + b, 0) + (_0x4791ac.length - 1) * 40) / 2;
 
     for (let i = 0; i < _0x4791ac.length; i++) {
         const item = _0x4791ac[i];
         const width = _0x25aa59[i];
         const btn = this.add.image(_0x599a9b + width / 2, 390, item.atlas, item.frame).setInteractive();
+<<<<<<< HEAD
         const btnScale = item.scale || 1;
         btn.setScale(btnScale);
         if (item.rotate) {
           btn.setAngle(90).setFlipY(true);
         }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         
         if (item.action === null) {
             this._pausePracticeBtn = btn;
@@ -3481,7 +4361,11 @@ _buildPauseOverlay() {
                 }
             });
         } else {
+<<<<<<< HEAD
             this._makeBouncyButton(btn, btnScale, item.action);
+=======
+            this._makeBouncyButton(btn, 1, item.action);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         }
         this._pauseContainer.add(btn);
         _0x599a9b += width + 40;
@@ -3530,16 +4414,29 @@ _buildSettingsPopup() {
     const dim = this.add.rectangle(centerX, centerY, screenWidth, screenHeight, 0, 150 / 255).setInteractive();
     this._settingsPopup.add(dim);
 
+<<<<<<< HEAD
     const corner = 0.325 * this.textures.get("GJ_square01").source[0].width;
     const panel = this._drawScale9(centerX, centerY, panelWidth, panelHeight, 'GJ_square01', corner, 16777215, 1);
     this._settingsPopup.add(panel);
 
     const closeBtn = this.add.image(centerX - (panelWidth / 2) + 10, centerY - (panelHeight / 2) + 10, 'GJ_WebSheet', "GJ_closeBtn_001.png").setScale(0.8).setInteractive();
     this._settingsPopup.add(closeBtn);
+=======
+    const innerContainer = this.add.container(centerX, centerY).setScale(0);
+    this._settingsPopup.add(innerContainer);
+
+    const corner = 0.325 * this.textures.get("GJ_square01").source[0].width;
+    const panel = this._drawScale9(0, 0, panelWidth, panelHeight, 'GJ_square01', corner, 16777215, 1);
+    innerContainer.add(panel);
+
+    const closeBtn = this.add.image(-(panelWidth / 2) + 10, -(panelHeight / 2) + 10, 'GJ_WebSheet', "GJ_closeBtn_001.png").setScale(0.8).setInteractive();
+    innerContainer.add(closeBtn);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._makeBouncyButton(closeBtn, 0.8, () => {
         this._settingsPopup.destroy();
         this._settingsPopup = null;
     });
+<<<<<<< HEAD
     const pages = ["Gameplay", "Visual"];
     let currentPage = 0;
     const pageTitle = this.add.bitmapText(centerX, centerY - (panelHeight / 2) + 45, "bigFont", pages[currentPage], 40).setOrigin(0.5);
@@ -3563,15 +4460,166 @@ _buildSettingsPopup() {
         const getTex = () => getVal() ? "GJ_checkOn_001.png" : "GJ_checkOff_001.png";
         const check = this.add.image(x + checkOffset, y, "GJ_GameSheet03", getTex()).setScale(0.8).setInteractive();
         const txt = this.add.bitmapText(x + textOffset, y, "bigFont", label, 25).setOrigin(0, 0.5);
+=======
+
+    const pages = ["Gameplay", "Visual"];
+    let currentPage = 0;
+    const pageTitle = this.add.bitmapText(0, -(panelHeight / 2) + 45, "bigFont", pages[currentPage], 40).setOrigin(0.5);
+    innerContainer.add(pageTitle);
+    const leftArrow = this.add.image(-(panelWidth / 2) - 130, 0, "GJ_GameSheet03", "GJ_arrow_01_001.png")
+        .setFlipX(false).setInteractive();
+    innerContainer.add(leftArrow);
+    const rightArrow = this.add.image((panelWidth / 2) + 130, 0, "GJ_GameSheet03", "GJ_arrow_01_001.png")
+        .setInteractive().setFlipX(true);
+    innerContainer.add(rightArrow);
+    const column1X = -200;
+    const column2X = 200;
+    const checkOffset = -120;
+    const textOffset = -70;
+    const spacingY = 70;
+    const startY = -150;
+    let pageContainer = this.add.container(0, 0);
+    innerContainer.add(pageContainer);
+
+    const createToggle = (container, x, y, label, getVal, setVal, callback = null, fontSize = 25) => {
+        const getTex = () => getVal() ? "GJ_checkOn_001.png" : "GJ_checkOff_001.png";
+        const check = this.add.image(x + checkOffset, y, "GJ_GameSheet03", getTex()).setScale(0.8).setInteractive();
+        const txt = this.add.bitmapText(x + textOffset, y, "bigFont", label, fontSize).setOrigin(0, 0.5);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         container.add([check, txt]);
 
         this._makeBouncyButton(check, 0.8, () => {
             setVal(!getVal());
             check.setTexture("GJ_GameSheet03", getTex());
             if (callback) callback(getVal());
+<<<<<<< HEAD
             this._saveSettings();
         });
     };
+=======
+            if (this._saveSettings) this._saveSettings();
+        });
+    };
+    const createNumberInput = (container, x, y, label, getVal, setVal) => {
+        const txt = this.add.bitmapText(x + textOffset, y, "bigFont", label, 25).setOrigin(0, 0.5);
+        container.add(txt);
+
+        const boxX = x + checkOffset;
+        const boxY = y;
+        const boxW = 64;
+        const boxH = 48;
+
+        const bgBoxGraphics = this.add.graphics();
+        bgBoxGraphics.fillStyle(0x222222, 0.5);
+        bgBoxGraphics.fillRoundedRect(boxX - boxW / 2, boxY - boxH / 2, boxW, boxH, 8);
+        container.add(bgBoxGraphics);
+
+        const hitArea = this.add.rectangle(boxX, boxY, boxW, boxH, 0x000000, 0)
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+        container.add(hitArea);
+
+        let initialVal = getVal() || 1;
+        const valueTxt = this.add.bitmapText(boxX, boxY, "bigFont", initialVal.toString(), 28)
+            .setOrigin(0.5);
+        container.add(valueTxt);
+
+        let isFocused = false;
+        let internalString = initialVal.toString();
+
+        const updateDisplay = () => {
+            if (isFocused) {
+                valueTxt.setText(internalString + "|");
+            } else {
+                valueTxt.setText(internalString || " ");
+            }
+        };
+
+        const commitValue = () => {
+            isFocused = false;
+
+            let val = parseFloat(internalString);
+            if (isNaN(val)) val = 1;
+
+            if (val < 0.1) val = 0.1;
+            if (val > 10) val = 10;
+
+            internalString = val.toString();
+            valueTxt.setText(internalString);
+            
+            setVal(val);
+            if (this._saveSettings) this._saveSettings();
+        };
+
+        hitArea.on('pointerdown', (pointer, localX, localY, event) => {
+            if (event) event.stopPropagation();
+            
+            if (window._activeCustomInput && window._activeCustomInput !== commitValue) {
+                window._activeCustomInput();
+            }
+
+            isFocused = true;
+            window._activeCustomInput = commitValue;
+            
+            internalString = ""; 
+            updateDisplay();
+        });
+
+        const outsideClickListener = () => {
+            if (isFocused) commitValue();
+        };
+        dim.on('pointerdown', outsideClickListener);
+
+        const keydownListener = (event) => {
+            if (!isFocused) return;
+
+            const key = event.key;
+
+            if (key === "Enter") {
+                event.preventDefault();
+                commitValue();
+                return;
+            }
+
+            if (key === "Backspace") {
+                event.preventDefault();
+                internalString = internalString.slice(0, -1);
+                updateDisplay();
+                return;
+            }
+
+            if (/^[0-9.]$/.test(key)) {
+                event.preventDefault();
+                
+                if (key === "." && internalString.includes(".")) return;
+
+                const parts = internalString.split('.');
+                
+                if (key === ".") {
+                    if (parts[0].length === 0) return;
+                } else {
+                    if (parts.length === 1 && parts[0].length >= 2) return;
+                    if (parts.length === 2 && parts[1].length >= 2) return;
+                }
+
+                internalString += key;
+                updateDisplay();
+            }
+        };
+
+        window.addEventListener('keydown', keydownListener);
+
+        const originalDestroy = container.destroy;
+        container.destroy = (...args) => {
+            window.removeEventListener('keydown', keydownListener);
+            if (dim) dim.off('pointerdown', outsideClickListener);
+            if (window._activeCustomInput === commitValue) {
+                window._activeCustomInput = null;
+            }
+            originalDestroy.apply(container, args);
+        };
+    };
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 
     const buildGameplayPage = (container) => {
         createToggle(container, column1X, startY, "Show Percentage", 
@@ -3601,10 +4649,27 @@ _buildSettingsPopup() {
             (v) => window.noClip = v,
             (v) => { if (this._noclipIndicator) this._noclipIndicator.setVisible(v); }
         );
+<<<<<<< HEAD
+=======
+        
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         createToggle(container, column1X, startY + (spacingY * 4), "Noclip Accuracy",
             () => window.noClipAccuracy,
             (v) => window.noClipAccuracy = v
         );
+<<<<<<< HEAD
+=======
+        
+        createToggle(container, column1X, startY + (spacingY * 5), "Macro Bot",
+            () => window.macroBot,
+            (v) => window.macroBot = v
+        );
+
+        createNumberInput(container, column2X, startY, "Speedhack", 
+            () => window.speedHack, 
+            (v) => window.speedHack = v
+        );
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     };
 
     const buildVisualPage = (container) => {
@@ -3641,25 +4706,71 @@ _buildSettingsPopup() {
             () => window.solidWave, 
             (v) => window.solidWave = v
         );
+<<<<<<< HEAD
+=======
+        
+        createToggle(container, column1X, startY + (spacingY * 5), "Show CPS",
+            () => window.showCPS,
+            (v) => window.showCPS = v
+        );
+
+        createToggle(container, column2X, startY, "Create Object ID labels", 
+            () => window.createObjectIds, 
+            (v) => window.createObjectIds = v,
+            null, 17
+        );
+
+        createToggle(container, column2X, startY + (spacingY), "Show Object ID labels", 
+            () => window.showObjectIds, 
+            (v) => window.showObjectIds = v,
+            null, 17
+        );
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     };
 
     const buildPage = (idx) => {
         pageContainer.destroy();
         pageContainer = this.add.container(0, 0);
+<<<<<<< HEAD
         this._settingsPopup.add(pageContainer);
         pageTitle.setText(pages[idx]);
         if (idx === 0) buildGameplayPage(pageContainer);
         else if (idx === 1) buildVisualPage(pageContainer);
     };
     buildPage(0);
+=======
+        innerContainer.add(pageContainer);
+        pageTitle.setText(pages[idx]);
+        
+        if (idx === 0) buildGameplayPage(pageContainer);
+        else if (idx === 1) buildVisualPage(pageContainer);
+    };
+
+    buildPage(0);
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._makeBouncyButton(leftArrow, 1, () => {
         currentPage = (currentPage - 1 + pages.length) % pages.length;
         buildPage(currentPage);
     });
+<<<<<<< HEAD
+=======
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._makeBouncyButton(rightArrow, 1, () => {
         currentPage = (currentPage + 1) % pages.length;
         buildPage(currentPage);
     });
+<<<<<<< HEAD
+=======
+    this.tweens.add({
+        targets: innerContainer,
+        scale: 1,
+        duration: 660,
+        ease: "Elastic.Out",
+        easeParams: [1, 0.6]
+    });
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   }
   _saveSettings() {
     const settings = {
@@ -3673,6 +4784,15 @@ _buildSettingsPopup() {
         solidWaveTrail: window.solidWave,
         noclipAccuracy: window.noClipAccuracy,
         hitboxesOnDeath: window.hitboxesOnDeath,
+<<<<<<< HEAD
+=======
+        showEditorGlow: window.showEditorGlow,
+        createObjectIds: window.createObjectIds,
+        showObjectIds: window.showObjectIds,
+        showCPS: window.showCPS,
+        speedHack: window.speedHack,
+        macroBot: window.macroBot,
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         showEditorGlow: window.showEditorGlow
     };
     localStorage.setItem("gd_settings", JSON.stringify(settings));
@@ -3690,6 +4810,15 @@ _buildSettingsPopup() {
         solidWaveTrail: false,
         noclipAccuracy: false,
         hitboxesOnDeath: false,
+<<<<<<< HEAD
+=======
+        showEditorGlow: false,
+        createObjectIds: false,
+        showObjectIds: false,
+        showCPS: false,
+        speedHack: 1.0,
+        macroBot: false,
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         showEditorGlow: false
     };
 
@@ -3705,9 +4834,181 @@ _buildSettingsPopup() {
     window.solidWave = data.solidWaveTrail;
     window.noClipAccuracy = data.noclipAccuracy;
     window.hitboxesOnDeath = data.hitboxesOnDeath;
+<<<<<<< HEAD
     window.showEditorGlow = data.showEditorGlow;
   }
   
+=======
+    window.showCPS = data.showCPS;
+    window.speedHack = data.speedHack;
+    window.macroBot = data.macroBot;
+    window.showEditorGlow = data.showEditorGlow;
+    window.createObjectIds = data.createObjectIds;
+    window.showObjectIds = data.showObjectIds;
+  }
+  _buildMacroPopup() {
+      if (this._macroPopup) return;
+      const centerX = screenWidth / 2;
+      const centerY = 320;
+      const panelWidth = 800;
+      const panelHeight = 400;
+      this._macroPopup = this.add.container(0, 0).setScrollFactor(0).setDepth(250);
+      const dim = this.add.rectangle(centerX, centerY, screenWidth, screenHeight, 0x000000, 150 / 255).setInteractive();
+      this._macroPopup.add(dim);
+
+      const corner = 0.325 * this.textures.get("GJ_square02").source[0].width;
+      const panel = this._drawScale9(centerX, centerY, panelWidth, panelHeight, "GJ_square02", corner, 0xffffff, 1);
+      this._macroPopup.add(panel);
+
+      this._macroPopup.add(this.add.bitmapText(centerX, centerY - (panelHeight / 2) + 45, "bigFont", "Web Bot v1.0", 40).setOrigin(0.5));
+
+      if (this._macroName === undefined) {
+          this._macroName = this._macroBot?.meta?.name || null;
+      }
+      if (this._macroLoaded === undefined) {
+          this._macroLoaded = !!this._macroName || (this._macroBot && this._macroBot.inputs && this._macroBot.inputs.length > 0);
+      }
+
+      const loadedNameText = this.add.bitmapText(centerX, centerY - (panelHeight / 2) + 95, "goldFont", this._macroLoaded ? `Currently loaded "${this._macroName || 'macro'}"` : "No macro loaded", 24).setOrigin(0.5);
+      this._macroPopup.add(loadedNameText);
+
+      const optionsBtn = this.add.image(centerX, centerY - (panelHeight / 2) + 95, "GJ_GameSheet03", "GJ_optionsBtn02_001.png").setInteractive().setFlipY(true).setAngle(90).setScale(0.45);
+      this._macroPopup.add(optionsBtn);
+
+      const closeBtn = this.add.image(centerX - (panelWidth / 2) + 20, centerY - (panelHeight / 2) + 20, "GJ_WebSheet", "GJ_closeBtn_001.png").setInteractive().setScale(0.8);
+      this._macroPopup.add(closeBtn);
+
+      this._makeBouncyButton(closeBtn, 0.8, () => {
+          this.events.off("update", this._refreshMacroButtons);
+          this._macroPopup.destroy();
+          this._macroPopup = null;
+      });
+
+      const importBtn = this.add.image(centerX - 300, centerY + 20,"importMacro").setInteractive();
+      const exportBtn = this.add.image(centerX - 150, centerY + 20, "GJ_GameSheet03", "GJ_shareBtn_001.png").setInteractive().setFlipY(true).setAngle(90).setScale(0.53);
+      const createBtn = this.add.image(centerX, centerY + 20, "GJ_GameSheet03", "GJ_plusBtn_001.png").setInteractive().setFlipY(true).setAngle(90).setScale(1.2);
+      const playbackBtn = this.add.image(centerX + 150, centerY + 20, this._macroBot?.playing ? "stopPlayback" : "playbackMacro").setInteractive().setScale(0.25);
+      const recordBtn = this.add.image(centerX + 300, centerY + 20, this._macroBot?.recording ? "stopRecord" : "recordMacro").setInteractive().setScale(0.25);
+
+      this._macroPopup.add([createBtn, importBtn, exportBtn, playbackBtn, recordBtn]);
+
+      this._refreshMacroButtons = () => {
+          const playing = !!this._macroBot?.playing;
+          const recording = !!this._macroBot?.recording;
+
+          let currentMetaName = this._macroBot?.meta?.name;
+          if (currentMetaName && currentMetaName !== this._macroName) {
+              this._macroName = currentMetaName;
+              this._macroLoaded = true;
+          }
+
+          if (this._macroLoaded) {
+              loadedNameText.setText(`Currently loaded "${this._macroName || 'macro'}"`);
+              optionsBtn.setAlpha(1).setActive(true);
+              optionsBtn.x = centerX + (loadedNameText.width / 2) + 25;
+          } else {
+              loadedNameText.setText("No macro loaded");
+              optionsBtn.setAlpha(0).setActive(false);
+          }
+
+          playbackBtn.setTexture(
+              playing
+                  ? "stopPlayback"
+                  : "playbackMacro"
+          );
+
+          recordBtn.setTexture(
+              recording
+                  ? "stopRecord"
+                  : "recordMacro"
+          );
+
+          createBtn.setAlpha((playing || recording || this._macroLoaded) ? 0.5 : 1);
+          importBtn.setAlpha((playing || recording) ? 0.5 : 1);
+          exportBtn.setAlpha((playing || recording || !this._macroLoaded) ? 0.5 : 1);
+          playbackBtn.setAlpha((recording || !this._macroLoaded) ? 0.5 : 1);
+          recordBtn.setAlpha((playing || !this._macroLoaded) ? 0.5 : 1);
+      };
+
+      this._refreshMacroButtons();
+
+      this._makeBouncyButton(optionsBtn, 0.45, () => {
+          if (!this._macroLoaded) return;
+          const renamePrompt = prompt("New name", this._macroName);
+          if (renamePrompt && renamePrompt.trim() !== "") {
+              const cleanName = renamePrompt.trim();
+              if (!this._macroBot) this._initMacroBot();
+              
+              if (!this._macroBot.meta) {
+                  this._macroBot.meta = {};
+              }
+              this._macroBot.meta.name = cleanName;
+              this._macroName = cleanName;
+              this._refreshMacroButtons();
+          }
+      });
+
+      this._makeBouncyButton(importBtn, 1, () => {
+          if (this._macroBot?.playing) return;
+          if (this._macroBot?.recording) return;
+          this._importMacroFile();
+      });
+
+      this._makeBouncyButton(exportBtn, 0.53, () => {
+          if (this._macroBot?.playing) return;
+          if (this._macroBot?.recording) return;
+          if (!this._macroLoaded) return;
+          this._exportMacroFile(this._macroName ? `${this._macroName}.wbgdr` : null);
+      });
+
+      this._makeBouncyButton(createBtn, 1.2, () => {
+          if (this._macroBot?.playing || this._macroBot?.recording || this._macroLoaded) return;
+          const name = prompt("Enter macro name");
+          if (name) {
+              if (!this._macroBot) this._initMacroBot();
+              this._macroBot.resetAll();
+              this._macroBot.meta.name = name;
+              this._macroName = name;
+              this._macroLoaded = true;
+              this._refreshMacroButtons();
+          }
+      });
+
+      this._makeBouncyButton(playbackBtn, 0.25, () => {
+          if (this._macroBot?.recording) return;
+          if (!this._macroLoaded) return;
+
+          if (this._macroBot?.playing) {
+              this._stopMacroPlayback();
+          } else {
+              if (!this._macroBot) {
+                  return;
+              }
+              const macro = this._macroBot.exportObject();
+              this._startMacroPlayback(macro);
+          }
+          this._refreshMacroButtons();
+      });
+
+      this._makeBouncyButton(recordBtn, 0.25, () => {
+          if (this._macroBot?.playing) return;
+          if (!this._macroLoaded) return;
+
+          if (this._macroBot?.recording) {
+              this._stopMacroRecording();
+          } else {
+              this._startMacroRecording({
+                  level: window.currentlevel?.[2] || "",
+                  name: this._macroName
+              });
+          }
+
+          this._refreshMacroButtons();
+      });
+
+      this.events.on("update", this._refreshMacroButtons);
+  }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   _buildInfoPopup() {
     if (this._infoPopup) {
       return;
@@ -3828,8 +5129,14 @@ _buildSettingsPopup() {
     this.tweens.add({
       targets: bounceContainer,
       scale: { from: 0, to: 1 },
+<<<<<<< HEAD
       duration: 500,
       ease: "Bounce.Out"
+=======
+      duration: 660,
+      ease: "Elastic.Out",
+      easeParams: [1, 0.6]
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     });
   }
   _closeInfoPopup() {
@@ -3886,6 +5193,7 @@ _buildSettingsPopup() {
   this._howToPlayPopup = this.add.container(0, 0).setScrollFactor(0).setDepth(300);
   const _0x249eb7 = this.add.rectangle(xPos, _0x4c3182, screenWidth, screenHeight, 0, 100 / 255);
   _0x249eb7.setInteractive();
+<<<<<<< HEAD
   _0x249eb7.on("pointerdown", (_pointer, _localX, _localY, event) => {
     if (event && event.stopPropagation) event.stopPropagation();
     this._closeHowToPlayPopup();
@@ -3898,6 +5206,11 @@ _buildSettingsPopup() {
   panelContainer.on("pointerdown", (_pointer, _localX, _localY, event) => {
     if (event && event.stopPropagation) event.stopPropagation();
   });
+=======
+  this._howToPlayPopup.add(_0x249eb7);
+  const _0x14e46f = this.textures.get("GJ_square01").source[0].width * 0.325;
+  const panelContainer = this.add.container(xPos, _0x4c3182);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   this._howToPlayPopup.add(panelContainer);
   const _0x2c64c2 = this._drawScale9(0, 0, 830, 530, "GJ_square01", _0x14e46f, 16777215, 1);
   panelContainer.add(_0x2c64c2);
@@ -4001,12 +5314,19 @@ _buildSettingsPopup() {
   this.tweens.add({
     targets: panelContainer,
     scale: 1,
+<<<<<<< HEAD
     duration: 400,
     ease: "Bounce.Out"
+=======
+    duration: 660,
+    ease: "Elastic.Out",
+    easeParams: [1, 0.6]
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   });
 }
   _closeHowToPlayPopup() {
     if (this._howToPlayPopup) {
+<<<<<<< HEAD
       this.tweens.killTweensOf(this._howToPlayPopup);
       if (this._howToPlayPopup.each) {
         this._howToPlayPopup.each(child => {
@@ -4017,6 +5337,8 @@ _buildSettingsPopup() {
         });
       }
       this.tweens.killTweensOf(this._howToPlayPopup);
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       this._howToPlayPopup.destroy();
       this._howToPlayPopup = null;
     }
@@ -4062,6 +5384,7 @@ _buildSettingsPopup() {
     */
     const updateEntries = [
       { text: "Update Log", scale: 0.85, font: "goldFont" },
+<<<<<<< HEAD
       { text: "undo and redo added", scale: 0.65 },
       { text: "saved levels!!", scale: 0.65 },
       { text: "objects and level length in editor", scale: 0.60 },
@@ -4075,6 +5398,12 @@ _buildSettingsPopup() {
       { text: "more transitions added.", scale: 0.65 },
       { text: "small bug fixes.", scale: 0.65 },
       { text: "- bog", scale: 0.95, color: 0xaaddff },
+=======
+      { text: "Accurate GDWeb+ logo", scale: 0.65 },
+      { text: "Credit to Altruist for making it", scale: 0.6 },
+      { text: "is this update finally out?", scale: 0.65, color: 0xaaddff },
+      { text: "- rohanis0000", scale: 0.65, color: 0xaaddff },
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     ]; 
     let yPos = 0;
     const lineItems = [];
@@ -4144,8 +5473,14 @@ _buildSettingsPopup() {
     this.tweens.add({
       targets: bounceContainer,
       scale: { from: 0, to: 1 },
+<<<<<<< HEAD
       duration: 500,
       ease: "Bounce.Out"
+=======
+      duration: 660,
+      ease: "Elastic.Out",
+      easeParams: [1, 0.6]
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     });
   }
   _closeUpdateLogPopup() {
@@ -4209,8 +5544,14 @@ _buildSettingsPopup() {
     this.tweens.add({
       targets: bounceContainer,
       scale: { from: 0, to: 1 },
+<<<<<<< HEAD
       duration: 500,
       ease: "Bounce.Out"
+=======
+      duration: 660,
+      ease: "Elastic.Out",
+      easeParams: [1, 0.6]
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     });
   }
   _closeNewgroundsPopup() {
@@ -4258,8 +5599,14 @@ _buildSettingsPopup() {
         this.tweens.add({
       targets: bounceContainer,
       scale: { from: 0, to: 1 },
+<<<<<<< HEAD
       duration: 500,
       ease: "Bounce.Out"
+=======
+      duration: 660,
+      ease: "Elastic.Out",
+      easeParams: [1, 0.6]
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     });
   }
   _closeFeaturedInfoPopup() {
@@ -4268,6 +5615,7 @@ _buildSettingsPopup() {
       this._featuredInfoPopup = null;
     }
   }
+<<<<<<< HEAD
   _openVaultMenu() {
     if (this._vaultPopup) return;
     const xPos = screenWidth / 2;
@@ -4313,6 +5661,8 @@ _buildSettingsPopup() {
       this._vaultPopup = null;
     }
   }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   _expandHitArea(_0x122213, _0x37180a) {
     const _0x46ea45 = _0x122213.width;
     const _0x43b461 = _0x122213.height;
@@ -4477,10 +5827,13 @@ _buildSettingsPopup() {
     if (!this._menuActive) {
       return;
     }
+<<<<<<< HEAD
     const currentLevelId = String(window.currentlevel && window.currentlevel[2] || "");
     if (!currentLevelId.startsWith("local_")) {
       this._clearCreatedLevelReturnState();
     }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     
     // fixed loading saved new best from local storage
     this._bestPercent = parseFloat(localStorage.getItem("bestPercent_" + (window.currentlevel[2] || "level_1")) || "0");
@@ -4535,6 +5888,33 @@ _buildSettingsPopup() {
     }
   });
 }
+<<<<<<< HEAD
+=======
+  if (this._chrSelDecor) {
+    this.tweens.add({
+      targets: this._chrSelDecor,
+      y: screenHeight + 100,
+      alpha: 0,
+      duration: 200,
+      ease: "Quad.In",
+      onComplete: () => {
+        if (this._chrSelDecor) { this._chrSelDecor.destroy(); this._chrSelDecor = null; }
+      }
+    });
+  }
+  if (this._lvlEditDecor) {
+    this.tweens.add({
+      targets: this._lvlEditDecor,
+      y: screenHeight + 100,
+      alpha: 0,
+      duration: 200,
+      ease: "Quad.In",
+      onComplete: () => {
+        if (this._lvlEditDecor) { this._lvlEditDecor.destroy(); this._lvlEditDecor = null; }
+      }
+    });
+  }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   //creator stuff the threequel
     if (this._creatorBtn) {
   this._closeCreatorMenu && this._closeCreatorMenu(true);
@@ -4652,6 +6032,7 @@ _buildSettingsPopup() {
     }
 
     if (window.isEditor) {
+<<<<<<< HEAD
         this._audio.stopMusic();
         this._cameraX = 0;
         this._cameraY = 0;
@@ -4667,6 +6048,14 @@ _buildSettingsPopup() {
         this._level.container.setVisible(true);
         this._level.topContainer.setVisible(true);
         this._syncEditorGroundView();
+=======
+        this._cameraX = 0;
+        this._cameraY = 0;
+        this._playerWorldX = 0;
+        this._level.additiveContainer.setVisible(true);
+        this._level.container.setVisible(true);
+        this._level.topContainer.setVisible(true);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         this._player.setCubeVisible(false);
         this._player2.setCubeVisible(false);
         this._attemptsLabel.setVisible(false);
@@ -4711,7 +6100,10 @@ _buildSettingsPopup() {
     this._levelJumps = 0;
     this._attempts++;
     localStorage.setItem("gd_totalAttempts", this._attempts);
+<<<<<<< HEAD
     this._recordRecentLevel("started");
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._attemptsLabel.setText("Attempt " + this._levelAttempts);
     this._attemptsLabel.setVisible(true);
     this._positionAttemptsLabel();
@@ -4727,7 +6119,11 @@ _buildSettingsPopup() {
       this._player.enterWaveMode();
     }
   }
+<<<<<<< HEAD
   _pushButton() {
+=======
+  _pushButton(ignoreMacro = false) {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const objectsUnderPointer = this.input.manager.hitTest(
       this.input.activePointer, 
       this._startPosGui.list,
@@ -4744,12 +6140,22 @@ _buildSettingsPopup() {
       this._startGame();
       return;
     }
+<<<<<<< HEAD
+=======
+
+    if (!cancelInput) {
+      if (!this._clickHistory) this._clickHistory = [];
+      this._clickHistory.push(this.time.now);
+    }
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     if (!this._slideIn && !this._state.isDead && !cancelInput) {
       this._state.upKeyDown = true;
       this._state.upKeyPressed = true;
       this._state.queuedHold = true;
       if (!this._state.isFlying && !this._state.isWave && !this._state.isUfo && this._state.canJump) {
         this._player.updateJump(0);
+<<<<<<< HEAD
         this._countJumpForCurrentPress();
       } else if (this._state.isUfo) {
         this._player.updateJump(0);
@@ -4770,6 +6176,88 @@ _buildSettingsPopup() {
     this._state.upKeyDown = false;
     this._state.upKeyPressed = false;
     this._state.queuedHold = false;
+=======
+        this._totalJumps++;
+        this._levelJumps++;
+        localStorage.setItem("gd_totalJumps", this._totalJumps);
+      } else if (this._state.isUfo) {
+        this._player.updateJump(0);
+        this._totalJumps++;
+        this._levelJumps++;
+        localStorage.setItem("gd_totalJumps", this._totalJumps);
+      }
+    }
+
+    if (!ignoreMacro && this._macroBot) {
+      this._macroBot.recordEdge(true, this._physicsFrame);
+    }
+  }
+  _releaseButton(ignoreMacro = false) {
+    this._state.upKeyDown = false;
+    this._state.upKeyPressed = false;
+    this._state.queuedHold = false;
+    if (!ignoreMacro && this._macroBot) {
+      this._macroBot.recordEdge(false, this._physicsFrame);
+    }
+  }
+  _initMacroBot() {
+    this._macroBot = new MacroBot(this);
+    window.macroBot = this._macroBot;
+  }
+  _startMacroRecording(meta = {}) {
+    if (!this._macroBot) this._initMacroBot();
+    this._macroBot.startRecording({
+      level: window.currentlevel?.[2] || "",
+      ...meta
+    });
+  }
+  _stopMacroRecording() {
+    if (!this._macroBot) return null;
+    return this._macroBot.stopRecording();
+  }
+  _startMacroPlayback(macroData) {
+    console.log(macroData);
+    if (!this._macroBot) this._initMacroBot();
+    this._macroBot.startPlayback(macroData);
+  }
+  _stopMacroPlayback() {
+    if (this._macroBot) this._macroBot.stopPlayback();
+  }
+  _exportMacroFile(filename = null) {
+    if (!this._macroBot) return;
+    const safeName = (filename || `${window.currentlevel?.[2] || "macro"}.gdr`)
+      .replace(/[^\w.\-]+/g, "_");
+    this._macroBot.download(safeName);
+  }
+  _importMacroFile() {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = ".wbgdr";
+
+    fileInput.onchange = async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      try {
+        if (!this._macroBot) this._initMacroBot();
+        
+        const macroData = await this._macroBot.importFile(file);
+        this._macroBot.inputs = Array.isArray(macroData.inputs) ? macroData.inputs.slice() : [];
+        const fallback = file.name.replace(/\.[^/.]+$/, "");
+        const macroName = macroData.meta?.name || fallback;
+
+        this._macroBot.meta = macroData.meta || this._macroBot.meta;
+        this._macroBot.meta.name = macroName;
+
+        this._macroName = macroName;
+        this._macroLoaded = true;
+      } catch (err) {
+        alert("Failed to import: " + err.message);
+      }
+    };
+
+    fileInput.click();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   }
   _positionMenuItems() {
     const _0x1e5db8 = screenWidth / 2;
@@ -4793,6 +6281,7 @@ _buildSettingsPopup() {
       this._playBtn.x = _0x1e5db8;
       this.tweens.killTweensOf(this._playBtn, "y");
       this._playBtn.y = 320;
+<<<<<<< HEAD
       this.tweens.add({
         targets: this._playBtn,
         y: 324,
@@ -4801,6 +6290,8 @@ _buildSettingsPopup() {
         yoyo: true,
         repeat: -1
       });
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     }
     if (this._downloadBtns) {
       const _0x285ef7 = screenWidth - 130;
@@ -4828,6 +6319,7 @@ _buildSettingsPopup() {
       this._creatorBtn.x = (screenWidth / 2) + this._playBtn.width / 2 + 100 + (this._creatorBtn.width * this._creatorBtn.scaleX) / 2;
       this.tweens.killTweensOf(this._creatorBtn, "y");
       this._creatorBtn.y = 320;
+<<<<<<< HEAD
       this.tweens.add({
         targets: this._creatorBtn,
         y: 324,
@@ -4836,6 +6328,8 @@ _buildSettingsPopup() {
         yoyo: true,
         repeat: -1
       });
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     }
     if (this._robLogo) {
       this._robLogo.x = 110;
@@ -4844,7 +6338,11 @@ _buildSettingsPopup() {
     if (this._socialIcons && this._socialIcons.length > 0) {
       const _iconSpacing = 52;
       const _originX = 65;
+<<<<<<< HEAD
      const _originY = 478;
+=======
+      const _originY = 478;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       const _layout = [{row:0,col:0},{row:0,col:1},{row:0,col:2},{row:0,col:3},
                        {row:1,col:0},{row:1,col:1},{row:1,col:2},{row:1,col:3},
                        {row:2,col:0},{row:2,col:1},{row:2,col:2},{row:2,col:3},{row:2,col:4}];
@@ -4876,7 +6374,11 @@ _buildSettingsPopup() {
     this._endCameraOverride = false;
     this._endCamTween = null;
     this._spaceWasDown = false;
+<<<<<<< HEAD
     this._jumpCountedForPress = false;
+=======
+    this._physicsFrame = 0;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   }
   _restartLevel() {
     this._attempts++;
@@ -5002,6 +6504,16 @@ _buildSettingsPopup() {
     if (this._player && this._player._hitboxTrail) {
       this._player._hitboxTrail = [];
     }
+<<<<<<< HEAD
+=======
+
+    if (this._macroBot?.recording == true){
+      this._macroBot?.clearRecording();
+    }
+    if (this._macroBot?.playing == true){
+      this._macroBot?.clearPlayback();
+    }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   }
   _getStartPosMusicOffset(){
     const startPositions = this._level.getStartPositions();
@@ -5022,6 +6534,7 @@ _buildSettingsPopup() {
     this._newBestShown = false;
     this._state.isDead = false;
     this._slideIn = false;
+<<<<<<< HEAD
     if (this._endCamTween) {
       this.tweens.killTweensOf(this._endCamTween);
     }
@@ -5032,6 +6545,11 @@ _buildSettingsPopup() {
     this._cameraX = checkpoint.cameraX;
     this._cameraXRef._v = this._cameraX;
     this._prevCameraX = this._cameraX;
+=======
+    this._playerWorldX = checkpoint.x;
+    this._cameraX = checkpoint.cameraX;
+    this._cameraXRef._v = this._cameraX;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._state.y = checkpoint.y;
     this._state.yVelocity = checkpoint.yVelocity;
     this._state.gravityFlipped = checkpoint.gravityFlipped;
@@ -5066,11 +6584,19 @@ _buildSettingsPopup() {
     this._state.isSpider = false;
     this._state.isBird = false;
     if (checkpoint.isFlying) {
+<<<<<<< HEAD
       this._player.enterShipMode();
     } else if (checkpoint.isBall) {
       this._player.enterBallMode();
     } else if (checkpoint.isUfo) {
       this._player.enterUfoMode();
+=======
+      this._player.enterShipMode(null, true); // dont mess with y velocity if ur loading a checkpoint
+    } else if (checkpoint.isBall) {
+      this._player.enterBallMode();
+    } else if (checkpoint.isUfo) {
+      this._player.enterUfoMode(null, true); // dont mess with y velocity if ur loading a checkpoint
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     } else if (checkpoint.isWave) {
       this._player.enterWaveMode();
     } else if (checkpoint.isSpider) {
@@ -5092,6 +6618,11 @@ _buildSettingsPopup() {
     this._state.isUfo = checkpoint.isUfo;
     this._state.isSpider = checkpoint.isSpider;
     this._state.isBird = checkpoint.isBird;
+<<<<<<< HEAD
+=======
+    this._state.ignorePortals = true;
+    this._state2.ignorePortals = true;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._level.resetGroundTiles(this._cameraX);
     this._level.resetObjects();
     this._level._flyCeilingY = checkpoint.flyCeilingY;
@@ -5141,6 +6672,10 @@ _buildSettingsPopup() {
     this._level.topContainer.x = -this._cameraX;
     this._level.topContainer.y = this._cameraY;
     this._level.updateVisibility(this._cameraX);
+<<<<<<< HEAD
+=======
+    this._level.updateObjectDebugIds();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._updateBackground();
     this._applyMirrorEffect();
     if (!this._audio.musicPlaying) {
@@ -5150,6 +6685,22 @@ _buildSettingsPopup() {
     if (this._player && this._player._hitboxTrail) {
       this._player._hitboxTrail = [];
     }
+<<<<<<< HEAD
+=======
+
+    this._physicsFrame = checkpoint.physicsFrame;
+    if (this._macroBot?.recording == true){
+      this._macroBot?.rollbackRecording(this._physicsFrame);
+      if (this._spaceKey.isDown || this._upKey.isDown || this._wKey.isDown || this._lKey.isDown){
+        this._macroBot.recordEdge(true, this._physicsFrame);
+      } else {
+        this._macroBot.recordEdge(false, this._physicsFrame);
+      }
+    }
+    if (this._macroBot?.playing == true){
+      this._macroBot?.rollbackPlayback(this._physicsFrame);
+    }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   }
   _onFullscreenChange(_0x310c5b) {
     if (!_0x310c5b) {
@@ -5188,6 +6739,10 @@ _buildSettingsPopup() {
       this._level.shiftGroundTiles(this._cameraX - _0x56287b);
       this._level.updateGroundTiles(this._cameraY);
       this._level.updateVisibility(this._cameraX);
+<<<<<<< HEAD
+=======
+      this._level.updateObjectDebugIds();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       this._level.applyEnterEffects(this._cameraX);
       const _0xde8a1a = this._playerWorldX - this._cameraX;
       this._player.syncSprites(this._cameraX, this._cameraY, 0, this._getMirrorXOffset(_0xde8a1a));
@@ -5235,7 +6790,12 @@ _buildSettingsPopup() {
     }
   }
   _quantizeDelta(_0x654f39) {
+<<<<<<< HEAD
     let _0x578d1b = _0x654f39 / 1000 + this._deltaBuffer;
+=======
+    const speed = window.speedHack || 1;
+    let _0x578d1b = (_0x654f39 * speed) / 1000 + this._deltaBuffer;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     let _0x53e02e = Math.round(_0x578d1b / u);
     if (_0x53e02e < 0) {
       _0x53e02e = 0;
@@ -5249,6 +6809,7 @@ _buildSettingsPopup() {
   }
   update(_0x54fa47, deltaTime) {
     if (window.isEditor) {
+<<<<<<< HEAD
         if (window.isEditorPaused) return;
         const pointer = this.input.activePointer;
         this._hitObjects = this.input.hitTestPointer(pointer);
@@ -5287,6 +6848,18 @@ _buildSettingsPopup() {
                 const currentWorldY = (pointer.y + this._cameraY) / (this._editorZoom || 1);
                 const currentGridX = Math.floor(currentWorldX / 60) * 60;
                 const currentGridY = Math.floor((currentWorldY + 20) / 60) * 60;
+=======
+        if (window.isEditorPause) return;
+        const pointer = this.input.activePointer;
+        this._hitObjects = this.input.hitTestPointer(pointer);
+        this._handleEditorCamera(deltaTime); 
+        this._updateEditorGrid(); 
+        if (pointer.isDown && !this._isDraggingSlider) {
+            if (this._isSwipeEnabled) {
+              if (this._hitObjects.length !== 0) return;
+                const currentGridX = Math.floor((pointer.x + this._cameraX) / 60) * 60;
+                const currentGridY = Math.floor((pointer.y + this._cameraY + 20) / 60) * 60;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 
                 if (currentGridX !== this._lastSwipeGridX || currentGridY !== this._lastSwipeGridY) {
                     this._editorAction();
@@ -5306,7 +6879,10 @@ _buildSettingsPopup() {
             }
         }
         this._updateEditorTimeline();
+<<<<<<< HEAD
         this._updateEditorStats();
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         return;
     }
     let rawPercent = (this._playerWorldX / this._level.endXPos) * 100;
@@ -5325,7 +6901,11 @@ _buildSettingsPopup() {
         displayValue = Math.floor(rawPercent) + "%";
     }
     this._percentageLabel.setText(displayValue);
+<<<<<<< HEAD
     this._percentageLabel.setVisible(window.showPercentage && !this._menuActive && !this._editorPlaytesting);
+=======
+    this._percentageLabel.setVisible(window.showPercentage && !this._menuActive);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._startPosGui.setVisible(window.startPosSwitcher && !this._menuActive);
     this._noclipIndicator.setVisible(window.noClip && !this._menuActive);
     this._accuracyIndicator.setVisible(window.noClip && window.noClipAccuracy && !this._menuActive);
@@ -5333,6 +6913,29 @@ _buildSettingsPopup() {
     this._accuracyIndicator.setText(`${this._player.noclipStats.accuracy.toFixed(2)}%`);
     this._deathsIndicator.setText(`${this._player.noclipStats.deaths} Deaths`);
 
+<<<<<<< HEAD
+=======
+    this._cpsIndicator.setVisible(window.showCPS && !this._menuActive);
+    if (this._clickHistory && this._clickHistory.length > 0) {
+      this._clickHistory = this._clickHistory.filter(timestamp => this.time.now - timestamp <= 1000);
+      this._cpsIndicator.setText(`${this._clickHistory.length} CPS`);
+    } else {
+      this._cpsIndicator.setText("0 CPS");
+    }
+    if (this._state.upKeyDown){
+      this._cpsIndicator.setTint(0x00ff00);
+    } else{
+      this._cpsIndicator.setTint(0xffffff);
+    }
+    this._cpsIndicator.setPosition(10, 10 + (window.noClip * 20) + (window.noClip && window.noClipAccuracy * 40));
+
+    this._bottedIndicator.setVisible(this._macroBot?.playing);
+    this._bottedIndicator.setPosition(10, 10 + (window.noClip * 20) + (window.noClip && window.noClipAccuracy * 40) + (window.showCPS * 20));
+    if (this._macroBtn){
+      this._macroBtn.setVisible(window.macroBot);
+    }
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._fpsAccum += deltaTime;
     this._fpsFrames++;
     if (this._fpsAccum >= 250) {
@@ -5341,10 +6944,14 @@ _buildSettingsPopup() {
       this._fpsFrames = 0;
     }
     if (this._paused) {
+<<<<<<< HEAD
       if (this._editorPlaytesting) {
         this._updatePausedEditorPlaytestView(deltaTime);
       }
       if (!this._editorPlaytesting && !this._updateLogPopup && (this._spaceKey.isDown || this._upKey.isDown || this._wKey.isDown || this._lKey.isDown) && !this._spaceWasDown && !this._settingsPopup) {
+=======
+      if (!this._updateLogPopup && (this._spaceKey.isDown || this._upKey.isDown || this._wKey.isDown || this._lKey.isDown) && !this._spaceWasDown && !this._settingsPopup) {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         setTimeout(() => {
           this._resumeGame();
         }, 75);
@@ -5355,7 +6962,10 @@ _buildSettingsPopup() {
     if (this._menuActive) {
       const _anyOverlayOpen = this._iconOverlay || this._creatorOverlay || this._searchOverlay ||
         this._onlineLevelsOverlay || this._settingsLayerOverlay || this._settingsPopup ||
+<<<<<<< HEAD
         this._savedLevelsOverlay || this._savedLevelDetailsOverlay || this._howToPlayPopup ||
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         this._infoPopup || this._newgroundsPopup || this._statsLayerOverlay || this._updateLogPopup;
       if (!_anyOverlayOpen && (this._spaceKey.isDown || this._upKey.isDown || this._wKey.isDown) && !this._spaceWasDown) {
         if (this._creatorMenuOpen) return;
@@ -5365,7 +6975,11 @@ _buildSettingsPopup() {
           this._closeLevelSelect(true);
           this._audio.stopMusic();
           this.game.registry.set("autoStartGame", true);
+<<<<<<< HEAD
           this._restartSceneWithBlackTransition();
+=======
+          this.scene.restart();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
           return;
         }
         this._openLevelSelect();
@@ -5382,7 +6996,11 @@ _buildSettingsPopup() {
       this._arrowWasDown = _arrowLeft || _arrowRight;
       this._spaceWasDown = this._spaceKey.isDown || this._upKey.isDown || this._wKey.isDown || this._lKey.isDown;
       const menuDelta = Math.min(deltaTime / 1000 * 60, 2);
+<<<<<<< HEAD
       const menuSpeed = 0.65;
+=======
+      const menuSpeed = 0.85;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       this._menuCameraX = (this._menuCameraX || 0) + menuDelta * playerSpeed * d * menuSpeed;
       const _0x38afac = this._cameraX;
       this._cameraX = this._menuCameraX;
@@ -5395,8 +7013,13 @@ _buildSettingsPopup() {
       if (this._menuRainbowTime === undefined) this._menuRainbowTime = 0;
       this._menuRainbowTime += deltaTime / 1000;
       const _rainbowHue = (this._menuRainbowTime * 15) % 360;
+<<<<<<< HEAD
       const _rainbowHex = Phaser.Display.Color.HSVToRGB(_rainbowHue / 360, 0.85, 0.9).color;
       const _groundHex = Phaser.Display.Color.HSVToRGB(_rainbowHue / 360, 0.85, 0.55).color;
+=======
+      const _rainbowHex = Phaser.Display.Color.HSVToRGB(_rainbowHue / 360, 0.85, 1.0).color;
+      const _groundHex = Phaser.Display.Color.HSVToRGB(_rainbowHue / 360, 0.85, 1.0).color;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       this._bg.setTint(_rainbowHex);
       this._level.setGroundColor(_groundHex);
       return;
@@ -5417,6 +7040,10 @@ _buildSettingsPopup() {
       this._level.topContainer.x = -this._cameraX;
       this._level.topContainer.y = this._cameraY;
       this._level.updateVisibility(this._cameraX);
+<<<<<<< HEAD
+=======
+      this._level.updateObjectDebugIds();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       this._updateBackground();
       this._level.stepGroundAnimation(deltaTime / 1000);
       this._level.updateGroundTiles(this._cameraY);
@@ -5445,6 +7072,7 @@ _buildSettingsPopup() {
       }
       return;
     }
+<<<<<<< HEAD
     let _0x368ad9 = this._spaceKey.isDown || this._upKey.isDown || this._wKey.isDown || this._lKey.isDown;
     if (!this._updateLogPopup && _0x368ad9 && !this._spaceWasDown) {
       this._pushButton();
@@ -5455,6 +7083,20 @@ _buildSettingsPopup() {
 
     const objectsUnderPointer = this.input.manager.hitTest(
       this.input.activePointer, 
+=======
+    this._applyJumpInput = () => {
+      const jumpHeld = this._spaceKey.isDown || this._upKey.isDown || this._wKey.isDown || this._lKey.isDown;
+      if (!this._updateLogPopup && jumpHeld && !this._spaceWasDown) {
+        this._pushButton();
+      } else if (!jumpHeld && this._spaceWasDown) {
+        this._releaseButton();
+      }
+      this._spaceWasDown = jumpHeld;
+    };
+
+    const objectsUnderPointer = this.input.manager.hitTest(
+      this.input.activePointer,
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       this._startPosGui.list,
       this.cameras.main
     );
@@ -5466,12 +7108,17 @@ _buildSettingsPopup() {
       this._state.upKeyDown = true;
       this._state.queuedHold = true;
     }
+<<<<<<< HEAD
     if (cancelInput){
+=======
+    if (cancelInput) {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       this._state.upKeyDown = false;
       this._state.upKeyPressed = false;
       this._state.queuedHold = false;
     }
     this._level.updateEndPortalY(this._cameraY, this._state.isFlying || this._state.isWave || this._state.isUfo);
+<<<<<<< HEAD
     if (!this._editorPlaytesting && !this._levelWon && !this._state.isDead && this._level.endXPos > 0) {
       const _0x448396 = 600;
       if (this._playerWorldX >= this._level.endXPos - _0x448396) {
@@ -5479,6 +7126,11 @@ _buildSettingsPopup() {
           this._stopEditorPlaytest();
           return;
         }
+=======
+    if (!this._levelWon && !this._state.isDead && this._level.endXPos > 0) {
+      const _0x448396 = 600;
+      if (this._playerWorldX >= this._level.endXPos - _0x448396) {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         this._levelWon = true;
         this._endPortalGameY = this._level._endPortalGameY || 240;
         this._triggerEndPortal();
@@ -5505,10 +7157,13 @@ _buildSettingsPopup() {
       return;
     }
     if (this._state.isDead) {
+<<<<<<< HEAD
       if (this._editorPlaytesting) {
         this._stopEditorPlaytest();
         return;
       }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       if (!this._deathSoundPlayed) {
         if (!this._practicedMode.practiceMode) {
           this._audio.stopMusic();
@@ -5540,15 +7195,22 @@ _buildSettingsPopup() {
             if (this._updatePracticeHUDBar) this._updatePracticeHUDBar();
           }
         }
+<<<<<<< HEAD
         this._recordRecentLevel("crashed");
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       }
       this._player.updateExplosionPieces(deltaTime);
       this._deathTimer += deltaTime;
       let _0x237728 = this._hadNewBest ? 1400 : 1000;
       if (this._deathTimer > _0x237728) {
+<<<<<<< HEAD
         if (this._editorPlaytesting) {
           this._stopEditorPlaytest();
         } else if (this._practicedMode.practiceMode) {
+=======
+        if (this._practicedMode.practiceMode) {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
           this._respawnFromCheckpoint();
         } else {
           this._restartLevel();
@@ -5636,6 +7298,14 @@ _buildSettingsPopup() {
     const initialY = this._state.y;
     for (let i = 0; i < subSteps; i++) {
       this._state.lastY = this._state.y;
+<<<<<<< HEAD
+=======
+      this._physicsFrame++;
+      this._applyJumpInput();
+      if (this._macroBot?.playing) {
+        this._macroBot.step(this._physicsFrame);
+      }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       this._player.updateJump(verticalDelta);
       this._state.y += this._state.yVelocity * verticalDelta;
       this._player.checkCollisions(this._playerWorldX - centerX);
@@ -5652,6 +7322,7 @@ _buildSettingsPopup() {
           this._player.killPlayer();
         }
       }
+<<<<<<< HEAD
 if (!this._state.isFlying && !this._state.isWave && !this._state.isUfo) {
   if (this._state.isBall) {
     const ballOnSurface = this._state.onGround || this._state.onCeiling;
@@ -5669,6 +7340,35 @@ if (!this._state.isFlying && !this._state.isWave && !this._state.isUfo) {
     if (!this._endCameraOverride) {
       const cameraOffsetX = this._playerWorldX - centerX;
       if (!this._editorPlaytesting && this._level.endXPos > 0) {
+=======
+      if (!this._state.isFlying && !this._state.isWave && !this._state.isUfo) {
+        if (this._state.isBall) {
+          const ballOnSurface = this._state.onGround || this._state.onCeiling;
+          this._player.updateBallRoll(horizontalDelta, ballOnSurface);
+        } else if (this._state.onGround) {
+          this._player.updateGroundRotation(verticalDelta);
+        } else if (this._player.rotateActionActive) {
+          this._player.updateRotateAction(u);
+        } else if (this._state.isDashing) {
+          this._player.updateDashRotation(u);
+        }
+      }
+
+      if (!this._player._scene._slideIn){
+        if (!this._player._hitboxTrail) this._player._hitboxTrail = [];
+        if (!this._player.p.isDead) {
+          this._player._hitboxTrail.push({ x: this._playerWorldX, y: this._player.p.y, rotation: this._player._rotation });
+          if (this._player._hitboxTrail.length > 180) this._player._hitboxTrail.shift();
+        }
+      }
+    }
+    this._state.lastY = initialY;
+    this._state.ignorePortals = false;
+    this._state2.ignorePortals = false;
+    if (!this._endCameraOverride) {
+      const cameraOffsetX = this._playerWorldX - centerX;
+      if (this._level.endXPos > 0) {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         const maxCameraX = this._level.endXPos - screenWidth;
         if (cameraOffsetX >= maxCameraX - 200) {
           this._endCameraOverride = true;
@@ -5731,6 +7431,10 @@ if (!this._state.isFlying && !this._state.isWave && !this._state.isUfo) {
     this._bg.setTint(this._colorManager.getHex(fs));
     this._level.setGroundColor(this._colorManager.getHex(gs));
     this._level.updateVisibility(this._cameraX);
+<<<<<<< HEAD
+=======
+    this._level.updateObjectDebugIds();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._level.checkEnterEffectTriggers(playerX);
     this._level.applyEnterEffects(this._cameraX);
     this._glitterCenterX = this._cameraX + screenWidth / 2;
@@ -5750,6 +7454,7 @@ if (!this._state.isFlying && !this._state.isWave && !this._state.isUfo) {
   }
 
 _handleEditorCamera = (delta) => {
+<<<<<<< HEAD
     if (this._editorPlaytesting && !this._paused) return;
     const camSpeed = 15;
     const cursors = this.input.keyboard.createCursorKeys();
@@ -5803,18 +7508,40 @@ _handleEditorCamera = (delta) => {
         this._editorWasdHoldState = {};
     }
 
+=======
+    const camSpeed = 15;
+    const cursors = this.input.keyboard.createCursorKeys();
+    const wasd = this.input.keyboard.addKeys('W,A,S,D');
+
+    if (cursors.left.isDown || wasd.A.isDown) {
+        this._cameraX -= camSpeed;
+    } else if (cursors.right.isDown || wasd.D.isDown) {
+        this._cameraX += camSpeed;
+    }
+
+    if (cursors.up.isDown || wasd.W.isDown) {
+        this._cameraY -= camSpeed;
+    } else if (cursors.down.isDown || wasd.S.isDown) {
+        this._cameraY += camSpeed;
+    }
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._level.container.x = -this._cameraX;
     this._level.container.y = -this._cameraY;
     this._level.additiveContainer.x = -this._cameraX;
     this._level.additiveContainer.y = -this._cameraY;
     this._level.topContainer.x = -this._cameraX;
     this._level.topContainer.y = -this._cameraY;
+<<<<<<< HEAD
     this._syncEditorGroundView();
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 
     this._bg.tilePositionX = this._cameraX * 0.1;
     this._bg.tilePositionY = this._bgInitY + this._cameraY * 0.1;
 };
 
+<<<<<<< HEAD
 _updatePausedEditorPlaytestView = (delta) => {
     const pointer = this.input.activePointer;
     const camSpeed = 15;
@@ -5929,6 +7656,8 @@ _layoutEditorFixedControls = () => {
     }
 };
 
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 _initEditorLogic = () => {
     if (this._editorGridGraphics) this._editorGridGraphics.destroy();
     this._editorGridGraphics = this.add.graphics().setDepth(5);
@@ -5945,6 +7674,7 @@ _initEditorLogic = () => {
     this._editorTab = "build";
     window.editorSelectedObject = -1;
     this._editorZoom = 1.0;
+<<<<<<< HEAD
     this._editorClipboard = null;
     this._editorSelectedObjects = [];
     this._editorMarqueeSelecting = false;
@@ -5969,11 +7699,15 @@ _initEditorLogic = () => {
     this.input.on('pointerdown', (pointer) => {
         if (this._editorPlaytesting && !this._paused) return;
         this._hitObjects = this.input.hitTestPointer(pointer);
+=======
+    this.input.on('pointerdown', (pointer) => {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         this._clickStartPos.x = pointer.x;
         this._clickStartPos.y = pointer.y;
         this._cameraStartX = this._cameraX;
         this._cameraStartY = this._cameraY;
         this._isDragging = false;
+<<<<<<< HEAD
         this._editorPointerStartedOnUi = this._hasEditorUiHitObjects();
         if (this._editorTab === "edit" && this._editorFreeMoveEnabled && !this._editorPointerStartedOnUi) {
             if (this._startEditorObjectDrag(pointer)) return;
@@ -6016,6 +7750,10 @@ _initEditorLogic = () => {
             this._editorPointerStartedOnUi = false;
             return;
         }
+=======
+    });
+    this.input.on('pointerup', (pointer) => {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         if (!this._isSwipeEnabled && !this._isDragging && !this._isDraggingSlider && this._hitObjects.length === 0) {
             this._editorAction();
         }
@@ -6023,7 +7761,10 @@ _initEditorLogic = () => {
         this._lastSwipeGridY = -1;
         this._isDragging = false;
         this._isDraggingSlider = false;
+<<<<<<< HEAD
         this._editorPointerStartedOnUi = false;
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     });
     this._createEditorGui();
 };
@@ -6033,6 +7774,7 @@ _createEditorGui = () => {
     const bottomY = screenHeight - 100;
 
     this._editorGui = this.add.container(screenWidth - 40, 40).setScrollFactor(0).setDepth(1000);
+<<<<<<< HEAD
     const editorPause = this.add.image(0, 0, "GJ_GameSheet03", "GJ_pauseBtn_001.png").setInteractive().setAngle(90).setFlipY(true);
     this._editorGui.add(editorPause);
     this._makeBouncyButton(editorPause, 1.0, () => this._showEditorPauseMenu(true), () => true);
@@ -6051,19 +7793,33 @@ _createEditorGui = () => {
     this._editorSongBtn = null;
     this._editorPlayBtn = null;
 
+=======
+    const editorPause = this.add.image(0, 0, "GJ_GameSheet03", "GJ_pauseBtn_001.png").setInteractive().setFlipX(true).setAngle(-90);
+    this._deleteButton = this.add.image(50, 40, "GJ_GameSheet03", "GJ_trashBtn_001.png").setInteractive();
+    this._editorGui.add(editorPause, this._deleteButton);
+    this._makeBouncyButton(editorPause, 1.0, () => this._showEditorPauseMenu(true), () => true);
+    this._makeBouncyButton(this._deleteButton, 0.9, () => this._deleteSelectedObject(), () => true);
+    this._initEditorPauseMenu();
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._toolbox = this.add.container(0, 0).setScrollFactor(0).setDepth(1000);
 
     const bg = this.add.rectangle(0, screenHeight, screenWidth, 200, 0x000000).setOrigin(0, 1).setAlpha(0.75).setInteractive();
     this._toolbox.add(bg);
 
     this._leftArrow = this.add.image(screenWidth / 2 - 330, screenHeight - 100, "GJ_GameSheet03", "GJ_arrow_02_001.png")
+<<<<<<< HEAD
         .setInteractive().setScale(0.7).setFlipX(false);
+=======
+        .setInteractive().setScale(0.7);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 
     this._rightArrow = this.add.image(screenWidth / 2 + 330, screenHeight - 100, "GJ_GameSheet03", "GJ_arrow_02_001.png")
         .setInteractive().setScale(0.7).setFlipX(true);
 
     this._toolbox.add([this._leftArrow, this._rightArrow]);
 
+<<<<<<< HEAD
     this._editorModeButtons = this.add.container(centerX + 470, screenHeight - 100).setScrollFactor(0).setDepth(1001);
     this._toolbox.add(this._editorModeButtons);
 
@@ -6134,6 +7890,28 @@ _createEditorGui = () => {
         this._editorSnapEnabled = !this._editorSnapEnabled;
     });
     this._updateEditorModeButtons();
+=======
+    const swipeX = centerX + 450;
+    const swipeY = screenHeight - 100;
+
+    this._swipeContainer = this.add.container(swipeX, swipeY).setDepth(1001);
+    this._toolbox.add(this._swipeContainer);
+
+    this._swipeBg = this.add.image(0, 0, "GJ_button01").setInteractive().setScale(0.8);
+    this._swipeText = this.add.bitmapText(-1, -2, "bigFont", "swipe", 16).setOrigin(0.5);
+
+    this._swipeContainer.add([this._swipeBg, this._swipeText]);
+
+    this._makeBouncyButton(this._swipeBg, 0.8, () => {
+        this._isSwipeEnabled = !this._isSwipeEnabled;
+
+        if (this._isSwipeEnabled) {
+            this._swipeBg.setTexture("GJ_button02");
+        } else {
+            this._swipeBg.setTexture("GJ_button01");
+        }
+    });
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 
     const tabX = (screenWidth / 2) - 475;
     const tabYStart = screenHeight - 150;
@@ -6159,15 +7937,19 @@ _createEditorGui = () => {
         this._makeBouncyButton(btn, 1, () => {
             this._editorTab = tab.id;
             this._editorPage = 0;
+<<<<<<< HEAD
             this._editorObjectDrag = null;
             this._editorRotatingObject = null;
             this._updateEditorModeButtons();
             this._updateEditorRotateControl();
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
             this._updateTabVisuals();
             this._buildObjectGrid();
         });
     });
 
+<<<<<<< HEAD
     this._sideButtons = this.add.container(screenWidth - 218, 132).setScrollFactor(0).setDepth(1000);
     const gridScale = 1.1;
     const gridDX = 82;
@@ -6234,12 +8016,33 @@ _createEditorGui = () => {
     
     const zoomInBtn = this.add.image(0, 0, "GJ_GameSheet03", "GJ_zoomInBtn_001.png").setAngle(90).setFlipY(true).setInteractive().setScale(0.9);
     const zoomOutBtn = this.add.image(0, 82, "GJ_GameSheet03", "GJ_zoomOutBtn_001.png").setAngle(90).setFlipY(true).setInteractive().setScale(0.9);
+=======
+    this._sideButtons = this.add.container(screenWidth - 48, 120).setScrollFactor(0).setDepth(1000);
+    this._copyPasteBtn = this.add.image(0, 0, "GJ_GameSheet03", "GJ_duplicateObjectBtn2_001.png").setInteractive().setAngle(90).setFlipY(true).setScale(1);
+    this._deselectBtn = this.add.image(0, 75, "GJ_GameSheet03", "GJ_deSelBtn2_001.png").setInteractive().setAngle(90).setFlipY(true).setScale(1);
+
+    this._sideButtons.add([this._copyPasteBtn, this._deselectBtn]);
+
+    this._makeBouncyButton(this._copyPasteBtn, 1, () => {
+        this._duplicateSelectedObject();
+    });
+
+    this._makeBouncyButton(this._deselectBtn, 1, () => {
+        this._clearEditorSelection();
+    });
+
+    this._zoomButtons = this.add.container(48, screenHeight / 2 - 20).setScrollFactor(0).setDepth(1000);
+    
+    const zoomInBtn = this.add.image(0, 0, "GJ_GameSheet03", "GJ_zoomInBtn_001.png").setAngle(90).setFlipY(true).setInteractive().setScale(0.9);
+    const zoomOutBtn = this.add.image(0, 75, "GJ_GameSheet03", "GJ_zoomOutBtn_001.png").setAngle(90).setFlipY(true).setInteractive().setScale(0.9);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     
     this._zoomButtons.add([zoomInBtn, zoomOutBtn]);
 
     this._makeBouncyButton(zoomInBtn, 0.9, () => this._adjustZoom(0.1));
     this._makeBouncyButton(zoomOutBtn, 0.9, () => this._adjustZoom(-0.1));
 
+<<<<<<< HEAD
     this._bottomActionButtons = this.add.container(screenWidth - 150, screenHeight - 125).setScrollFactor(0).setDepth(1002).setVisible(false);
 
     this._layerControls = this.add.container(screenWidth - 120, screenHeight - 218).setScrollFactor(0).setDepth(1003).setScale(0.84);
@@ -6250,6 +8053,8 @@ _createEditorGui = () => {
     this._makeBouncyButton(layerDown, 0.56, () => this._cycleEditorLayer(-1));
     this._makeBouncyButton(layerUp, 0.56, () => this._cycleEditorLayer(1));
 
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._zoomText = this.add.bitmapText(screenWidth / 2, 80, "bigFont", "Zoom: 1.00x", 40).setOrigin(0.5).setScrollFactor(0).setDepth(2000).setAlpha(0);
 
     this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
@@ -6257,6 +8062,7 @@ _createEditorGui = () => {
         this._adjustZoom(zoomAmount, pointer.x, pointer.y);
     });
 
+<<<<<<< HEAD
     this._pushEditorHistory();
     this._updateEditorActionButtons();
     this._updateEditorLayerDisplay();
@@ -7389,6 +9195,15 @@ _updateEditorStats = () => {
 
 _adjustZoom = (delta, anchorX = screenWidth / 2, anchorY = screenHeight / 2) => {
     if (this._editorPlaytesting && !this._paused) return;
+=======
+    this._updateEditorActionButtons();
+    this._updateTabVisuals();
+    this._buildObjectGrid();
+    this._initEditorTimeline();
+};
+
+_adjustZoom = (delta, anchorX = screenWidth / 2, anchorY = screenHeight / 2) => {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const oldZoom = this._editorZoom;
     let newZoom = oldZoom + delta;
     newZoom = Phaser.Math.Clamp(newZoom, 0.1, 4.0);
@@ -7401,8 +9216,11 @@ _adjustZoom = (delta, anchorX = screenWidth / 2, anchorY = screenHeight / 2) => 
     this._level.container.setScale(newZoom);
     this._cameraX = (worldAnchorX * newZoom) - anchorX;
     this._cameraY = (worldAnchorY * newZoom) - anchorY;
+<<<<<<< HEAD
     this._syncEditorGroundView();
     this._layoutEditorFixedControls();
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._updateEditorGrid();
     this._zoomText.setText(`Zoom: ${newZoom.toFixed(2)}x`);
     this._zoomText.setAlpha(1);
@@ -7672,6 +9490,7 @@ _buildObjectGrid = () => {
     });
 };
 
+<<<<<<< HEAD
 _moveObject = (dx, dy, pushHistory = true) => {
     const selected = this._getEditorSelectionIndices();
     if (!selected.length) return;
@@ -7745,11 +9564,44 @@ _setEditorObjectRotation = (selectedIndex, rotation) => {
             if (s._coinWorldX !== undefined) s._coinWorldX = s.x;
             if (s._coinWorldY !== undefined) s._coinWorldY = 460 - s.y;
             s.angle += delta;
+=======
+_moveObject = (dx, dy) => {
+    const selectedIndex = window.editorSelectedObject;
+    if (selectedIndex === -1) return;
+
+    const collider = this._level.objects[selectedIndex];
+    const sprites = this._level.objectSprites[selectedIndex];
+    const saveObj = window.levelObjects[selectedIndex];
+
+    if (!saveObj) return;
+
+    if (collider) {
+      collider.x += dx; collider.y += dy;
+      collider._baseX += dx; collider._baseY += dy;
+      collider._origBaseX += dx; collider._origBaseY += dy;
+    }
+
+    saveObj.x += dx / 2; saveObj.y -= dy / 2;
+    if (saveObj._raw) {
+        saveObj._raw["2"] = String(saveObj.x);
+        saveObj._raw["3"] = String(saveObj.y);
+    }
+
+    if (sprites) {
+        for (const s of sprites) {
+            if (!s) continue;
+            s.x += dx; s.y += dy;
+            if (s._eeWorldX !== undefined) s._eeWorldX += dx;
+            if (s._eeBaseY !== undefined) s._eeBaseY += dy;
+            if (s._origWorldX !== undefined) s._origWorldX += dx;
+            if (s._origBaseY !== undefined) s._origBaseY += dy;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         }
     }
 };
 
 _rotateObject = (degrees) => {
+<<<<<<< HEAD
     const selected = this._getEditorRotatableSelection();
     if (!selected.length) return;
     for (const selectedIndex of selected) {
@@ -7807,11 +9659,93 @@ _clearEditorSelection = () => {
     this._currentSelectedSprite = null;
     this._editorSelectedObjects = [];
     this._editorRotatingObject = null;
+=======
+    const selectedIndex = window.editorSelectedObject;
+    if (selectedIndex === -1) return;
+
+    const collider = this._level.objects[selectedIndex];
+    const sprites = this._level.objectSprites[selectedIndex];
+    const saveObj = window.levelObjects[selectedIndex];
+
+    if (!saveObj) return;
+
+    saveObj.rot = (saveObj.rot || 0) + degrees;
+    
+    if (saveObj._raw) {
+        saveObj._raw["6"] = String(saveObj.rot);
+    }
+
+    if (collider) {
+        collider.rotation = saveObj.rot;
+    }
+
+    if (sprites) {
+        for (const s of sprites) {
+            if (!s) continue;
+            s.angle += degrees; 
+        }
+    }
+};
+
+_flipObject = (axis) => {
+    const selectedIndex = window.editorSelectedObject;
+    if (selectedIndex === -1) return;
+
+    const sprites = this._level.objectSprites[selectedIndex];
+    const saveObj = window.levelObjects[selectedIndex];
+
+    if (!saveObj) return;
+
+    if (axis === "x") {
+        saveObj.flipX = !saveObj.flipX;
+        if (saveObj._raw) saveObj._raw["4"] = saveObj.flipX ? "1" : "0";
+        
+        if (sprites) {
+            for (const s of sprites) {
+                if (!s) continue;
+                s.setFlipX(!s.flipX);
+                s.angle = -s.angle; 
+            }
+        }
+    } else {
+        saveObj.flipY = !saveObj.flipY;
+        if (saveObj._raw) saveObj._raw["5"] = saveObj.flipY ? "1" : "0";
+
+        if (sprites) {
+            for (const s of sprites) {
+                if (!s) continue;
+                s.setFlipY(!s.flipY);
+                s.angle = -s.angle;
+            }
+        }
+    }
+    saveObj.rot = -saveObj.rot;
+};
+
+_clearEditorSelection = () => {
+    if (this._currentSelectedSprites) {
+        for (const spr of this._currentSelectedSprites) {
+            if (!spr) continue;
+
+            if (spr._editorPrevTint !== undefined && spr._editorPrevTint !== null) {
+                spr.setTint(spr._editorPrevTint);
+            } else {
+                spr.clearTint();
+            }
+
+            delete spr._editorPrevTint;
+        }
+    }
+
+    this._currentSelectedSprites = [];
+    this._currentSelectedSprite = null;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     window.editorSelectedObject = -1;
     this._updateEditorActionButtons();
 };
 
 _selectEditorObjectByIndex = (index) => {
+<<<<<<< HEAD
     this._selectEditorObjectsByIndices([index]);
 };
 
@@ -7833,10 +9767,78 @@ _duplicateSelectedObject = () => {
     }
     this._selectEditorObjectsByIndices(newIndices);
     this._pushEditorHistory();
+=======
+    this._clearEditorSelection();
+
+    const linkedSprites = this._level.objectSprites[index];
+    if (!linkedSprites || !linkedSprites.length) return;
+
+    for (const spr of linkedSprites) {
+        if (!spr) continue;
+
+        if (spr._editorPrevTint === undefined) {
+            spr._editorPrevTint =
+                spr.tintTopLeft !== undefined
+                    ? spr.tintTopLeft
+                    : null;
+        }
+
+        spr.setTint(0x00ff00);
+        this._currentSelectedSprites.push(spr);
+    }
+
+    this._currentSelectedSprite = linkedSprites[0];
+    window.editorSelectedObject = index;
+    this._updateEditorActionButtons();
+};
+
+_duplicateSelectedObject = () => {
+    const selectedIndex = window.editorSelectedObject;
+    if (selectedIndex === -1) return;
+
+    const src = window.levelObjects[selectedIndex];
+    if (!src) return;
+
+    const clone = JSON.parse(JSON.stringify(src));
+
+    window.levelObjects.push(clone);
+    this._level._spawnObject(clone);
+
+    const newIndex = this._level.objects.length - 1;
+    const newestSprites = this._level.objectSprites[newIndex];
+
+    if (newestSprites && newestSprites.length) {
+        const depthBase = {
+            "-3": -6,
+            "-1": -3,
+            0: 0,
+            1: 3,
+            3: 6,
+            5: 9
+        };
+
+        const finalDepth =
+            (depthBase[clone.zLayer] || 0) +
+            (clone.zOrder * 0.01);
+
+        for (const spr of newestSprites) {
+            if (!spr) continue;
+
+            spr.setDepth((spr._eeZDepth || finalDepth) + 10);
+
+            if (this._level.container && !this._level.container.exists(spr)) {
+                this._level.container.add(spr);
+            }
+        }
+    }
+
+    this._selectEditorObjectByIndex(newIndex);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._buildObjectGrid();
 };
 
 _deleteSelectedObject = () => {
+<<<<<<< HEAD
     const selected = this._getEditorSelectionIndices().sort((a, b) => b - a);
     if (!selected.length) return;
     this._clearEditorSelection();
@@ -7854,12 +9856,36 @@ _deleteSelectedObject = () => {
     for (let i = 0; i < this._level.objectSprites.length; i++) {
         const list = this._level.objectSprites[i];
         if (!list || !list.length) continue;
+=======
+    const selectedIndex = window.editorSelectedObject;
+    if (selectedIndex === -1) return;
+
+    this._clearEditorSelection();
+
+    const sprites = this._level.objectSprites[selectedIndex] || [];
+    for (const spr of sprites) {
+        if (spr && spr.destroy) spr.destroy();
+    }
+
+    const collider = this._level.objects[selectedIndex];
+    if (collider && collider.destroy) collider.destroy();
+
+    this._level.objectSprites.splice(selectedIndex, 1);
+    this._level.objects.splice(selectedIndex, 1);
+    window.levelObjects.splice(selectedIndex, 1);
+
+    for (let i = selectedIndex; i < this._level.objectSprites.length; i++) {
+        const list = this._level.objectSprites[i];
+        if (!list || !list.length) continue;
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         for (const spr of list) {
             if (spr) spr._eeObjectId = i;
         }
     }
 
     this._buildObjectGrid();
+<<<<<<< HEAD
     this._pushEditorHistory();
     this._updateEditorStats();
     this._updateEditorActionButtons();
@@ -7904,20 +9930,47 @@ _updateEditorActionButtons = () => {
         if (!btn) continue;
         btn.setAlpha(alpha);
         if (!btn.list) setButtonEnabled(btn, hasSelection);
+=======
+    this._updateEditorActionButtons();
+};
+
+_updateEditorActionButtons = () => {
+    const hasSelection = window.editorSelectedObject !== -1;
+    const alpha = hasSelection ? 1 : 0.5;
+
+    if (this._copyPasteBtn) {
+        this._copyPasteBtn.setAlpha(alpha);
+
+        if (hasSelection) {
+            this._copyPasteBtn.setInteractive();
+        } else {
+            this._copyPasteBtn.disableInteractive();
+        }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     }
 
     if (this._deselectBtn) {
         this._deselectBtn.setAlpha(alpha);
+<<<<<<< HEAD
         setButtonEnabled(this._deselectBtn, hasSelection);
     }
 
     if (this._layerBtn) {
         this._layerBtn.setAlpha(hasSelection ? 1 : 0.5);
         setButtonEnabled(this._layerBtn, hasSelection);
+=======
+
+        if (hasSelection) {
+            this._deselectBtn.setInteractive();
+        } else {
+            this._deselectBtn.disableInteractive();
+        }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     }
 
     if (this._deleteButton) {
         this._deleteButton.setAlpha(alpha);
+<<<<<<< HEAD
         setButtonEnabled(this._deleteButton, hasSelection);
     }
 
@@ -7934,6 +9987,24 @@ _updateEditorActionButtons = () => {
     if (this._editorTab == "delete" && this._deleteGridButton) {
         this._deleteGridButton.setAlpha(alpha);
         setButtonEnabled(this._deleteGridButton, hasSelection);
+=======
+
+        if (hasSelection) {
+            this._deleteButton.setInteractive();
+        } else {
+            this._deleteButton.disableInteractive();
+        }
+    }
+
+    if (this._editorTab == "delete") {
+        this._deleteGridButton.setAlpha(alpha);
+
+        if (hasSelection) {
+            this._deleteGridButton.setInteractive();
+        } else {
+            this._deleteGridButton.disableInteractive();
+        }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     }
 };
 
@@ -7969,7 +10040,10 @@ _updateEditorGrid = () => {
 };
 
 _editorAction = () => {
+<<<<<<< HEAD
   if (!this._canEditLevelNow()) return;
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   if (this._editorTab === "build") {
     this._placeObject();
   } else if (this._editorTab === "edit") {
@@ -7980,7 +10054,10 @@ _editorAction = () => {
 }
 
 _placeObject = () => {
+<<<<<<< HEAD
     if (!this._canEditLevelNow()) return;
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const pointer = this.input.activePointer;
 
     const worldX = (this.input.activePointer.x + this._cameraX) / this._editorZoom;
@@ -7989,31 +10066,48 @@ _placeObject = () => {
     const snapX = Math.floor(worldX / 60) * 60;
     const snapY = Math.floor((worldY + 20) / 60) * 60;
 
+<<<<<<< HEAD
     const placeX = snapX;
     const placeY = snapY;
     const transformedX = (placeX / 2) + 15;
     const transformedY = -(placeY / 2) + 225;
+=======
+    const transformedX = (snapX / 2) + 15;
+    const transformedY = -(snapY / 2) + 225;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 
     const objId = window.selectedObjId;
     const objectDef = getObjectFromId(objId);
 
     if (!objectDef) return;
 
+<<<<<<< HEAD
     const placeRotation = 0;
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const saveData = {
         id: objId,
         x: transformedX,
         y: transformedY,
         flipX: false,
         flipY: false,
+<<<<<<< HEAD
         rot: placeRotation,
         scale: 1,
         zLayer: this._editorActiveLayer ?? 0,
+=======
+        rot: 0,
+        scale: 1,
+        zLayer: objectDef.default_z_layer || 0,
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         zOrder: objectDef.default_z_order || 0,
         groups: "",
         color1: 0,
         color2: 0,
+<<<<<<< HEAD
         noGlow: true,
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         gameMode: 0,
         miniMode: 0,
         speed: 0,
@@ -8025,6 +10119,7 @@ _placeObject = () => {
             "3": String(transformedY),
             "4": "0",
             "5": "0",
+<<<<<<< HEAD
             "6": String(placeRotation),
             "21": "0",
             "22": "0",
@@ -8033,6 +10128,15 @@ _placeObject = () => {
             "32": "1",
             "57": "",
             "96": "1",
+=======
+            "6": "0",
+            "21": "0",
+            "22": "0",
+            "24": String(objectDef.default_z_layer || 0),
+            "25": String(objectDef.default_z_order || 0),
+            "32": "1",
+            "57": "",
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
             "kA2": "0",
             "kA3": "0",
             "kA4": "0",
@@ -8047,7 +10151,11 @@ _placeObject = () => {
     const placedIndex = this._level.objectSprites.length - 1;
     const newestSprites = this._level.objectSprites[placedIndex];
 
+<<<<<<< HEAD
     if (newestSprites && newestSprites.length) {
+=======
+    if (newestSprites && newestSprites.sprites) {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         const depthBase = {
             "-3": -6,
             "-1": -3,
@@ -8058,6 +10166,7 @@ _placeObject = () => {
         };
 
         const finalDepth =
+<<<<<<< HEAD
             (depthBase[saveData.zLayer] ?? saveData.zLayer * 3) +
             (saveData.zOrder * 0.01);
 
@@ -8066,6 +10175,15 @@ _placeObject = () => {
 
             spr.setDepth((spr._eeZDepth || finalDepth) + 10);
             spr._editorBaseDepth = spr._eeZDepth || finalDepth;
+=======
+            (depthBase[saveData.zLayer] || 0) +
+            (saveData.zOrder * 0.01);
+
+        for (const spr of newestSprites.sprites) {
+            if (!spr) continue;
+
+            spr.setDepth((spr._eeZDepth || finalDepth) + 10);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 
             if (spr._eeLayer === 2) {
                 if (this._level.topContainer && !this._level.topContainer.exists(spr)) {
@@ -8078,6 +10196,7 @@ _placeObject = () => {
             }
         }
     }
+<<<<<<< HEAD
     this._applyEditorLayerVisibility();
 
     if (newestSprites && newestSprites.length) {
@@ -8087,17 +10206,78 @@ _placeObject = () => {
     this._pushEditorHistory();
     this._updateEditorStats();
     this._saveEditorIfPausedPlaytest();
+=======
+
+    if (this._currentSelectedSprites) {
+        for (const spr of this._currentSelectedSprites) {
+            if (!spr) continue;
+
+            if (spr._editorPrevTint !== undefined && spr._editorPrevTint !== null) {
+                spr.setTint(spr._editorPrevTint);
+            } else {
+                spr.clearTint();
+            }
+
+            delete spr._editorPrevTint;
+        }
+    }
+
+    this._currentSelectedSprites = [];
+    if (newestSprites && newestSprites.length) {
+        for (const spr of newestSprites) {
+            if (!spr) continue;
+
+            if (spr._editorPrevTint === undefined) {
+                spr._editorPrevTint =
+                    spr.tintTopLeft !== undefined
+                        ? spr.tintTopLeft
+                        : null;
+            }
+
+            spr.setTint(0x00ff00);
+
+            this._currentSelectedSprites.push(spr);
+        }
+
+        this._currentSelectedSprite = newestSprites[0];
+        window.editorSelectedObject = placedIndex;
+    }
+    this._updateEditorActionButtons();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 };
 
 _selectObjectAtPointer = () => {
     const pointer = this.input.activePointer;
 
+<<<<<<< HEAD
     this._clearEditorSelection();
+=======
+    if (this._currentSelectedSprites) {
+        for (const spr of this._currentSelectedSprites) {
+            if (!spr) continue;
+
+            if (spr._editorPrevTint !== undefined && spr._editorPrevTint !== null) {
+                spr.setTint(spr._editorPrevTint);
+            } else {
+                spr.clearTint();
+            }
+
+            delete spr._editorPrevTint;
+        }
+    }
+
+    this._currentSelectedSprites = [];
+    this._currentSelectedSprite = null;
+    window.editorSelectedObject = -1;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 
     let foundObjectIndex = -1;
 
     for (let i = this._level.objectSprites.length - 1; i >= 0; i--) {
+<<<<<<< HEAD
         if (!this._isEditorObjectOnActiveLayer(i)) continue;
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         const spriteList = this._level.objectSprites[i];
 
         if (!spriteList || !spriteList.length) continue;
@@ -8123,7 +10303,29 @@ _selectObjectAtPointer = () => {
     if (foundObjectIndex === -1) {
         return;
     }
+<<<<<<< HEAD
     this._selectEditorObjectsByIndices([foundObjectIndex]);
+=======
+    const linkedSprites = this._level.objectSprites[foundObjectIndex];
+    if (!linkedSprites || !linkedSprites.length) {
+        return;
+    }
+    for (const spr of linkedSprites) {
+        if (!spr) continue;
+        if (spr._editorPrevTint === undefined) {
+            spr._editorPrevTint =
+                spr.tintTopLeft !== undefined
+                    ? spr.tintTopLeft
+                    : null;
+        }
+        spr.setTint(0x00ff00);
+        this._currentSelectedSprites.push(spr);
+    }
+
+    this._currentSelectedSprite = linkedSprites[0];
+    window.editorSelectedObject = foundObjectIndex;
+    this._updateEditorActionButtons();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 };
 
 _deleteObjectAtPointer = () => {
@@ -8132,7 +10334,10 @@ _deleteObjectAtPointer = () => {
     let foundObjectIndex = -1;
 
     for (let i = this._level.objectSprites.length - 1; i >= 0; i--) {
+<<<<<<< HEAD
         if (!this._isEditorObjectOnActiveLayer(i)) continue;
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         const spriteList = this._level.objectSprites[i];
         if (!spriteList || !spriteList.length) continue;
 
@@ -8183,6 +10388,7 @@ _deleteObjectAtPointer = () => {
     }
 
     window.editorSelectedObject = -1;
+<<<<<<< HEAD
     this._pushEditorHistory();
     this._updateEditorStats();
     this._updateEditorActionButtons();
@@ -8237,6 +10443,9 @@ _returnEditorToLevelDetails = (saveFirst = false) => {
     if (this._pauseBtn) this._pauseBtn.setVisible(false);
     this._prepareEditorExitToLevelDetails();
     this._restartSceneWithBlackTransition();
+=======
+    this._updateEditorActionButtons();
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 };
 
 _initEditorPauseMenu = () => {
@@ -8247,16 +10456,20 @@ _initEditorPauseMenu = () => {
         .setInteractive();
     this._editorMenuContainer.add(bgDim);
 
+<<<<<<< HEAD
     this._pauseObjectCountText = this.add.bitmapText(28, 34, "goldFont", "", 30)
         .setOrigin(0, 0.5);
     this._pauseLengthText = this.add.bitmapText(28, 78, "goldFont", "", 30)
         .setOrigin(0, 0.5);
     this._editorMenuContainer.add([this._pauseObjectCountText, this._pauseLengthText]);
 
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const buttonData = [
         { text: "Resume", cb: () => this._showEditorPauseMenu(false) },
         { 
             text: "Save and Play", 
+<<<<<<< HEAD
             cb: async () => {
                 this._saveEditorLevel();
                 this._showEditorPauseMenu(false);
@@ -8276,21 +10489,42 @@ _initEditorPauseMenu = () => {
                     window.isEditor = false;
                     this._restartSceneWithBlackTransition();
                 }
+=======
+            cb: async () => { 
+                this._saveEditorLevel(); 
+                await this._showLoadingBuffer("Loading...");
+                window.isEditor = false; 
+                this.game.registry.set("autoStartGame", true); 
+                this.scene.restart(); 
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
             } 
         },
         { 
             text: "Save and Exit", 
+<<<<<<< HEAD
             cb: () => { 
                 this._returnEditorToLevelDetails(true);
             } 
         },
         { text: "Save", cb: () => this._saveEditorLevel() },
         { text: "Exit", cb: () => { this._returnEditorToLevelDetails(false); } }
+=======
+            cb: async () => { 
+                this._saveEditorLevel(); 
+                await this._showLoadingBuffer("Loading...");
+                window.isEditor = false; 
+                this.scene.restart(); 
+            } 
+        },
+        { text: "Save", cb: () => this._saveEditorLevel() },
+        { text: "Exit", cb: () => { window.isEditor = false; this.scene.restart(); } }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     ];
 
     buttonData.forEach((data, i) => {
         const x = screenWidth / 2;
         const y = (screenHeight / 2) - 150 + (i * 70);
+<<<<<<< HEAD
         const group = this.add.container(x, y);
         const width = 360;
         const height = 50;
@@ -8325,6 +10559,17 @@ _initEditorPauseMenu = () => {
             group.setScale(1);
             data.cb();
         });
+=======
+        
+        const btnImg = this.add.nineslice(x, y, "GJ_button01", null, 450, 65, 24, 24, 24, 24 ).setScale(0.75).setInteractive();
+        const label = this.add.bitmapText(x, y - 2, "goldFont", data.text, 40).setOrigin(0.5, 0.5).setScale(0.8);
+
+        this._editorMenuContainer.add([btnImg, label]);
+
+        this._makeBouncyButton(btnImg, 0.75, () => {
+            data.cb();
+        }, () => true);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     });
 
     const createToggle = (container, x, y, label, getVal, setVal, callback = null) => {
@@ -8347,6 +10592,7 @@ _initEditorPauseMenu = () => {
 );
 };
 
+<<<<<<< HEAD
 _getEditorLengthSeconds = () => Math.max(1, Math.ceil(this._getEditorLevelWidth() / 600));
 
 _formatEditorDuration = (seconds) => {
@@ -8382,6 +10628,8 @@ _updateEditorPauseStats = () => {
     this._pauseLengthText.setText(`LENGTH: ${this._formatEditorDuration(lengthSeconds)} (${this._getEditorLengthName(lengthSeconds)})`);
 };
 
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 _showLoadingBuffer = (statusText) => {
     return new Promise((resolve) => {
         const overlay = this.add.graphics().setDepth(2000).setScrollFactor(0);
@@ -8403,6 +10651,7 @@ _showLoadingBuffer = (statusText) => {
 };
 
 _showEditorPauseMenu = (show) => {
+<<<<<<< HEAD
     if (show) {
       this._stopEditorAudioPlayback();
       this._updateEditorPauseStats();
@@ -8410,6 +10659,10 @@ _showEditorPauseMenu = (show) => {
     this._editorMenuContainer.setVisible(show);
     window.isEditorPaused = show;
     this._setEditorPlaybackControlsEnabled(!show);
+=======
+    this._editorMenuContainer.setVisible(show);
+    window.isEditorPaused = show;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 };
 
 _serializeLevel(levelData) {
@@ -8436,12 +10689,15 @@ _serializeObject(object) {
     return "";
   }
 
+<<<<<<< HEAD
   if (window.isEditor) {
     object.noGlow = true;
     if (!object._raw) object._raw = {};
     object._raw["96"] = "1";
   }
 
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   let objectData = { ...(object._raw || {}) };
 
   objectData[1] = String(object.id);
@@ -8460,7 +10716,10 @@ _serializeObject(object) {
 
   objectData[21] = String(object.color1 ?? 0);
   objectData[22] = String(object.color2 ?? 0);
+<<<<<<< HEAD
   objectData[96] = object.noGlow ? "1" : (objectData[96] ?? "0");
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 
   objectData["kA2"] = String(object.gameMode ?? 0);
   objectData["kA3"] = String(object.miniMode ?? 0);
@@ -8484,6 +10743,10 @@ _saveEditorLevel = () => {
       settings: window.settingslist
     }
     const newLevelString = this._serializeLevel(levelData);
+<<<<<<< HEAD
+=======
+    console.log(newLevelString);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     
     let createdLevels = JSON.parse(localStorage.getItem("created_levels") || "[]");
     let levelIndex = createdLevels.findIndex(l => l.createdId === window.currentlevel[2]);
@@ -8501,7 +10764,11 @@ _saveEditorLevel = () => {
 
 _initEditorTimeline = () => {
     const y = 40;
+<<<<<<< HEAD
     this._timelineContainer = this.add.container(0, 0).setScrollFactor(0).setDepth(1500).setVisible(false);
+=======
+    this._timelineContainer = this.add.container(0, 0).setScrollFactor(0).setDepth(1500);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const width = screenWidth / 3;
     const groove = this.add.image(screenWidth / 2, y, "slidergroove2").setDisplaySize(width, 26);
     const thumb = this.add.image(screenWidth / 2, y, "GJ_moveBtn").setScale(0.4).setInteractive({ draggable: true });
@@ -8509,22 +10776,31 @@ _initEditorTimeline = () => {
     this._timelineSlider = {width, groove, thumb, y };
     const startX = screenWidth / 2 - (width / 2);
     thumb.on("dragstart", () => {
+<<<<<<< HEAD
         if (this._editorPlaytesting && !this._paused) return;
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         this._isDraggingSlider = true;
         thumb.setTexture("GJ_moveSBtn");
     });
     thumb.on("drag", (pointer, dragX) => {
+<<<<<<< HEAD
         if (this._editorPlaytesting && !this._paused) return;
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         const minX = startX;
         const maxX = startX + width;
         thumb.x = Phaser.Math.Clamp(dragX, minX, maxX);
         const pct = (thumb.x - minX) / width;
         const levelWidth = this._getEditorLevelWidth();
         this._cameraX = pct * levelWidth;
+<<<<<<< HEAD
         if (this._editorPlaytesting && this._paused) {
             this._updatePausedEditorPlaytestView(0);
             return;
         }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         this._level.container.x = -this._cameraX;
         this._level.container.y = -this._cameraY;
         this._level.additiveContainer.x = -this._cameraX;
@@ -8534,7 +10810,10 @@ _initEditorTimeline = () => {
         this._bg.tilePositionX = this._cameraX * 0.1;
     });
     thumb.on("dragend", () => {
+<<<<<<< HEAD
         if (this._editorPlaytesting && !this._paused) return;
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         thumb.setTexture("GJ_moveBtn");
     });
 };
@@ -8672,6 +10951,7 @@ _applyMirrorEffect() {
   }
 
     _triggerEndPortal() {
+<<<<<<< HEAD
     if (this._editorPlaytesting) {
       return;
     }
@@ -8692,17 +10972,37 @@ _applyMirrorEffect() {
       try { completedSet = JSON.parse(localStorage.getItem(completedKey) || "[]"); } catch(e) { completedSet = []; }
       if (!completedSet.includes(completedLevelId)) {
         completedSet.push(completedLevelId);
+=======
+    this._player.playEndAnimation(this._level.endXPos, () => this._levelComplete(), this._endPortalGameY);
+  }
+  _levelComplete() {
+    if (!this._practicedMode.practiceMode) {
+      this._bestPercent = 100;
+      localStorage.setItem("bestPercent_" + (window.currentlevel[2] || "level_1"), 100);
+      const completedKey = "gd_completedSet";
+      let completedSet;
+      try { completedSet = JSON.parse(localStorage.getItem(completedKey) || "[]"); } catch(e) { completedSet = []; }
+      const levelId = window.currentlevel[2] || "level_1";
+      if (!completedSet.includes(levelId)) {
+        completedSet.push(levelId);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         localStorage.setItem(completedKey, JSON.stringify(completedSet));
         window._completedLevels = completedSet.length;
         localStorage.setItem("gd_completedLevels", window._completedLevels);
       }
     } else {
       this._practiceBestPercent = 100;
+<<<<<<< HEAD
       localStorage.setItem("practiceBestPercent_" + completedLevelId, 100);
       if (this._updatePracticeHUDBar) this._updatePracticeHUDBar();
     }
     this._syncCompletionAchievements(completedLevelId, completedInPractice);
     this._recordRecentLevel("completed");
+=======
+      localStorage.setItem("practiceBestPercent_" + (window.currentlevel[2] || "level_1"), 100);
+      if (this._updatePracticeHUDBar) this._updatePracticeHUDBar();
+    }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 
     const _0x356782 = this._level.endXPos - this._cameraX;
     const _0x2d967b = b(this._endPortalGameY) + this._cameraY;
@@ -8800,7 +11100,13 @@ _applyMirrorEffect() {
   }
   _showCompleteText() {
     const _0x56628c = screenWidth / 2;
+<<<<<<< HEAD
     const _0x45ab26 = this.add.image(_0x56628c, 250, "GJ_WebSheet", "GJ_levelComplete_001.png").setScrollFactor(0).setDepth(60).setScale(0.01);
+=======
+    const _0x45ab26 = this._practicedMode.practiceMode
+      ? this.add.image(_0x56628c, 250, "GJ_GameSheet03", "GJ_practiceComplete_001.png").setScrollFactor(0).setDepth(60).setScale(0.01)
+      : this.add.image(_0x56628c, 250, "GJ_WebSheet", "GJ_levelComplete_001.png").setScrollFactor(0).setDepth(60).setScale(0.01);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this.tweens.add({
       targets: _0x45ab26,
       scale: 1.1,
@@ -8912,6 +11218,7 @@ _applyMirrorEffect() {
     const _0x3e9c79 = _0x33b564.y - 35;
     this._endLayerInternal.add(this.add.image(containerX - 312, _0x3e9c79, "GJ_WebSheet", "chain_01_001.png").setOrigin(0.5, 1));
     this._endLayerInternal.add(this.add.image(containerX + 312, _0x3e9c79, "GJ_WebSheet", "chain_01_001.png").setOrigin(0.5, 1));
+<<<<<<< HEAD
     this._endLayerInternal.add(this.add.image(containerX, 170, "GJ_WebSheet", "GJ_levelComplete_001.png").setScale(0.8));
     const _0x45b6e4 = 0.8;
     let _0xe44f6d = 250;
@@ -8919,6 +11226,18 @@ _applyMirrorEffect() {
     this._endLayerInternal.add(_0x2de55e);
     _0xe44f6d += 48;
     this._endLayerInternal.add(this.add.bitmapText(containerX, _0xe44f6d, "goldFont", "Jumps: " + this._totalJumps, 40).setOrigin(0.5, 0.5).setScale(_0x45b6e4));
+=======
+    const _completeBanner = this._practicedMode.practiceMode
+      ? this.add.image(containerX, 170, "GJ_GameSheet03", "GJ_practiceComplete_001.png").setScale(0.8)
+      : this.add.image(containerX, 170, "GJ_WebSheet", "GJ_levelComplete_001.png").setScale(0.8);
+    this._endLayerInternal.add(_completeBanner);
+    const _0x45b6e4 = 0.8;
+    let _0xe44f6d = 250;
+    const _0x2de55e = this.add.bitmapText(containerX, _0xe44f6d, "goldFont", "Attempts: " + this._levelAttempts, 40).setOrigin(0.5, 0.5).setScale(_0x45b6e4);
+    this._endLayerInternal.add(_0x2de55e);
+    _0xe44f6d += 48;
+    this._endLayerInternal.add(this.add.bitmapText(containerX, _0xe44f6d, "goldFont", "Jumps: " + this._levelJumps, 40).setOrigin(0.5, 0.5).setScale(_0x45b6e4));
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     _0xe44f6d += 48;
     const _0x596450 = Math.floor(this._playTime);
     const _0x30687e = Math.floor(_0x596450 / 3600);
@@ -8931,14 +11250,23 @@ _applyMirrorEffect() {
     const _0x452429 = ["Awesome!", "Good\nJob!", "Well\nDone!", "Impressive!", "Amazing!", "Incredible!", "Skillful!", "Brilliant!", "Not\nbad!", "Warp\nSpeed!", "Challenge\nBreaker!", "Reflex\nMaster!", "I am\nspeechless...", "You are...\nThe One!", "How is this\npossible!?", "You beat\nme..."];
     const _0x165c06 = _0x452429[Math.floor(Math.random() * _0x452429.length)];
     const _0x45540f = 225;
+<<<<<<< HEAD
     this._endLayerInternal.add(this.add.bitmapText(containerX + _0x45540f, _0x241209, "bigFont", _0x165c06, 40).setOrigin(0.5, 0.5).setScale(0.8).setCenterAlign());
+=======
+    const _0x8e2b = ["\x5f\x6d\x61\x63\x72\x6f\x42\x6f\x74", "\x70\x6c\x61\x79\x69\x6e\x67"];let _0x3bc14 = 0xffffff; try {if (this[_0x8e2b[0]] && this[_0x8e2b[0]][_0x8e2b[1]]) {_0x3bc14 = (_0x3bc14 & 0xffff00) | 0xfa;}} catch (_0xe31) {}const _0x17fa2b = this.add.bitmapText(containerX + _0x45540f, _0x241209, "bigFont", _0x165c06, 40).setOrigin(0.5, 0.5).setScale(0.8).setCenterAlign();if (_0x3bc14 !== 0xffffff) _0x17fa2b.setTint(_0x3bc14);
+    this._endLayerInternal.add(_0x17fa2b);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._endLayerInternal.add(this.add.image(containerX - _0x45540f, 352.5, "GJ_WebSheet", "getIt_001.png").setScale(1 / 1.5));
     const _0x34b1bd = [{
       key: "downloadApple_001",
       url: "https://discord.gg/TfEzAVWPSJ"
     }, {
       key: "downloadSteam_001",
+<<<<<<< HEAD
       url: "https://store.steampowered.com/app/322170/Geometry_Dash"
+=======
+      url: "https://github.com/web-dashers/web-dashers.github.io"
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     }];
     for (let _0x10f8cc = 0; _0x10f8cc < _0x34b1bd.length; _0x10f8cc++) {
       const _0xd7310b = _0x34b1bd[_0x10f8cc];
@@ -8961,10 +11289,19 @@ _applyMirrorEffect() {
       action: () => {
         this._audio.playEffect("quitSound_01");
         this._audio.stopMusic();
+<<<<<<< HEAD
         if (this._returnToSavedLevelDetails(400)) {
           return;
         }
         this._returnToMainMenu(400);
+=======
+        this.game.registry.set("fadeInFromBlack", true);
+        this.cameras.main.fadeOut(400, 0, 0, 0, (_0x53bf86, _0x15310d) => {
+          if (_0x15310d >= 1) {
+            this.scene.restart();
+          }
+        });
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       }
     }];
     for (const _0x2d4335 of _0x45fc2b) {
@@ -8974,6 +11311,7 @@ _applyMirrorEffect() {
     }
   }
   _showSettingsScreen() {
+<<<<<<< HEAD
     if (this._settingsLayerOverlay || this._settingsLayerInternal || this._settingsScreenClosing) {
       return;
     }
@@ -8982,6 +11320,8 @@ _applyMirrorEffect() {
       this._settingsPopup.destroy();
       this._settingsPopup = null;
     }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._settingsScreenClosing = false;
     if (this._pauseBtn) {
       this.tweens.add({
@@ -9082,7 +11422,11 @@ _applyMirrorEffect() {
         return grp;
     };
 
+<<<<<<< HEAD
     _makeSettingsBtn(_sColL, _sRow1Y, "Account",    _sBtnW2, true, () => { this._showAccountScreen(); });
+=======
+    _makeSettingsBtn(_sColL, _sRow1Y, "Account",    _sBtnW2, false, null);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     _makeSettingsBtn(_sColR, _sRow1Y, "How To Play", _sBtnW2, true, () => { this._buildHowToPlayPopup(); });
     _makeSettingsBtn(_sColL, _sRow2Y, "Options",    _sBtnW2, true,  () => { this._buildSettingsPopup(); });
     _makeSettingsBtn(_sColR, _sRow2Y, "Graphics",   _sBtnW2, false, null);
@@ -9188,11 +11532,14 @@ _applyMirrorEffect() {
     if (!this._settingsLayerInternal || this._settingsScreenClosing) {
       return;
     }
+<<<<<<< HEAD
     this._closeHowToPlayPopup();
     if (this._settingsPopup) {
       this._settingsPopup.destroy();
       this._settingsPopup = null;
     }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._settingsScreenClosing = true;
     const _0x272eb1 = () => {
       this._settingsScreenClosing = false;
@@ -9430,6 +11777,7 @@ _applyMirrorEffect() {
       });
     });
   }
+<<<<<<< HEAD
   _fitBitmapText(textObj, maxWidth, maxScale = 1, minScale = 0.45) {
     if (!textObj || !textObj.width) return textObj;
     const targetScale = Math.max(minScale, Math.min(maxScale, maxWidth / textObj.width));
@@ -10367,6 +12715,8 @@ _applyMirrorEffect() {
     maskObj(btn);
     return cellObjs;
   }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   _openListScene(title, rowHeight, onBack) {
     const sw = screenWidth;
     const sh = screenHeight;
@@ -10481,7 +12831,11 @@ _applyMirrorEffect() {
     };
     this._makeBouncyButton(backBtn, 1, () => closeOverlay());
     const prevBtn = this.add.image(40, sh / 2, "GJ_GameSheet03", "GJ_arrow_03_001.png")
+<<<<<<< HEAD
       .setScrollFactor(0).setDepth(204).setOrigin(0.5).setInteractive().setFlipX(false).setVisible(false);
+=======
+      .setScrollFactor(0).setDepth(204).setOrigin(0.5).setInteractive().setVisible(false);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     objects.push(prevBtn);
     this._makeBouncyButton(prevBtn, 1, () => {});
     const nextBtn = this.add.image(sw - 40, sh / 2, "GJ_GameSheet03", "GJ_arrow_03_001.png")
@@ -10580,6 +12934,7 @@ _applyMirrorEffect() {
       const rowH = 180;
       const rowY = _panelBoundaryTop + rowIdx * rowH - scrollOffsetY;
       const cellObjs = [];
+<<<<<<< HEAD
       const maskObj = obj => {
         if (obj && obj.setMask) obj.setMask(_panelMask);
         cellObjs.push(obj);
@@ -10619,6 +12974,17 @@ _applyMirrorEffect() {
         if (levelData.id) this._playOnlineLevelFromId(levelData.id);
       }, { depth: 205, width: 122, height: 58, fontSize: 31 });
       maskObj(btn);
+=======
+      const rx = listLeft;
+      const boundaryTop = _panelBoundaryTop;
+      const boundaryBottom = _panelBoundaryBottom;
+      if (rowIdx > 0 && rowY >= boundaryTop && rowY <= boundaryBottom) {
+        const div = this.add.rectangle(rx + panelW / 2, rowY, panelW - 10, 1.5, 0x000000, 0.6)
+          .setScrollFactor(0).setDepth(203).setOrigin(0.5, 0.5);
+        cellObjs.push(div);
+      }
+
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       return cellObjs;
     };
     const _parseKV = (str) => {
@@ -10637,6 +13003,7 @@ _applyMirrorEffect() {
         this._featuredPageUpdate(page);
       }
 
+<<<<<<< HEAD
       if (isFeatured) {
         _lastLevelStrs = [];
         _lastLevelData = [];
@@ -10651,6 +13018,8 @@ _applyMirrorEffect() {
         return;
       }
 
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       spinSprite.setVisible(true);
       refreshBtn.setVisible(false);
       pageLbl.setVisible(false);

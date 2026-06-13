@@ -56,7 +56,10 @@ function parseObject(objectString) {
       groups: objectData[57] || "",
       color1: parseInt(objectData[21] || "0", 10),
       color2: parseInt(objectData[22] || "0", 10),
+<<<<<<< HEAD
       noGlow: objectData[96] === "1",
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       // Following are for startpos
       gameMode: parseInt(objectData['kA2'] ?? '0', 10),
       miniMode: parseInt(objectData['kA3'] ?? '0', 10),
@@ -330,6 +333,10 @@ window.LevelObject = class LevelObject {
     this._ceilingStartScreenY = 0;
     this._activeStartPosIndex = -1; 
     this._startPositions = [];
+<<<<<<< HEAD
+=======
+    this._debugIdTextsList = [];
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._buildGround();
   }
   getStartPositions() {
@@ -352,6 +359,7 @@ window.LevelObject = class LevelObject {
       objects: levelObjects,
       settings: settingslist
     } = parseLevel(levelData);
+<<<<<<< HEAD
     if (window.isEditor) {
       for (const levelObj of levelObjects) {
         if (!levelObj) continue;
@@ -360,6 +368,8 @@ window.LevelObject = class LevelObject {
         levelObj._raw["96"] = "1";
       }
     }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._spawnLevelObjects(levelObjects);
     this._setUpSettings(settingslist);
     window.levelObjects = levelObjects;
@@ -423,6 +433,10 @@ window.LevelObject = class LevelObject {
     }
   }
   _buildGround() {
+<<<<<<< HEAD
+=======
+    if (window.isEditor) return; // not dealing with ts rn
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const scene = this._scene;
     window._groundId = window._groundId ? window._groundId : "00";
     
@@ -438,7 +452,11 @@ window.LevelObject = class LevelObject {
       let groundTile = scene.add.image(0, groundY, "groundSquare_" + window._groundId + "_001.png");
       groundTile.setOrigin(0, 0);
       groundTile.setTint(17578);
+<<<<<<< HEAD
       groundTile.setDepth(20).setScrollFactor(0);
+=======
+      groundTile.setDepth(20);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       groundTile._worldX = tileX;
       this._groundTiles.push(groundTile);
       let ceilingTile = scene.add.image(0, groundY, "groundSquare_" + window._groundId + "_001.png");
@@ -446,7 +464,11 @@ window.LevelObject = class LevelObject {
       ceilingTile.setFlipY(true);
       ceilingTile.setTint(17578);
       ceilingTile.setDepth(20);
+<<<<<<< HEAD
       ceilingTile.setVisible(false).setScrollFactor(0);
+=======
+      ceilingTile.setVisible(false);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       ceilingTile._worldX = tileX;
       this._ceilingTiles.push(ceilingTile);
     }
@@ -463,10 +485,17 @@ window.LevelObject = class LevelObject {
     this._ceilingShadowR = scene.add.image(screenWidth + 1, groundY, "GJ_WebSheet", "groundSquareShadow_001.png").setOrigin(1, 1).setScrollFactor(0).setDepth(22).setAlpha(shadowAlpha).setScale(0.7, 1).setFlipX(true).setFlipY(true).setBlendMode(E).setVisible(false);
   }
   applyGroundTexture() {
+<<<<<<< HEAD
     const gId = window._groundId || "00";
     const texKey = "groundSquare_" + gId + "_001.png";
     if (!this._scene.textures.exists(texKey)) return;
     if (!this._groundTiles || !this._ceilingTiles) return;
+=======
+    if (window.isEditor) return; // not dealing with ts rn
+    const gId = window._groundId || "00";
+    const texKey = "groundSquare_" + gId + "_001.png";
+    if (!this._scene.textures.exists(texKey)) return;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const groundFrame = this._scene.textures.getFrame(texKey);
     this._tileW = groundFrame ? groundFrame.width : this._tileW;
     for (let tile of this._groundTiles) {
@@ -476,6 +505,7 @@ window.LevelObject = class LevelObject {
       tile.setTexture(texKey);
     }
   }
+<<<<<<< HEAD
   _ensureGroundTileCount(requiredTileCount) {
     const scene = this._scene;
     const tileWidth = this._tileW || 1012;
@@ -492,15 +522,35 @@ window.LevelObject = class LevelObject {
 
       let newCeilingTile = scene.add.image(0, groundY, texKey);
       newCeilingTile.setOrigin(0, 1).setFlipY(true).setTint(ceilingTint).setDepth(20).setVisible(false).setScrollFactor(0);
+=======
+  resizeScreen() {
+    var newTile;
+    var newCeilingTile;
+    const scene = this._scene;
+    const tileWidth = this._tileW;
+    const requiredTileCount = Math.ceil(screenWidth / tileWidth) + 2;
+    const groundY = b(0);
+    while (this._groundTiles.length < requiredTileCount) {
+      const newTileX = this._maxGroundWorldX + tileWidth;
+      let newGroundTile = scene.add.image(0, groundY, "groundSquare_" + window._groundId + "_001.png");
+      newGroundTile.setOrigin(0, 0).setTint(((newTile = this._groundTiles[0]) == null ? undefined : newTile.tintTopLeft) || 17578).setDepth(20);
+      newGroundTile._worldX = newTileX;
+      this._groundTiles.push(newGroundTile);
+      let newCeilingTile = scene.add.image(0, groundY, "groundSquare_" + window._groundId + "_001.png");
+      newCeilingTile.setOrigin(0, 1).setFlipY(true).setTint(((newCeilingTile = this._groundTiles[0]) == null ? undefined : newCeilingTile.tintTopLeft) || 17578).setDepth(20).setVisible(false);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       newCeilingTile._worldX = newTileX;
       this._ceilingTiles.push(newCeilingTile);
       this._maxGroundWorldX = newTileX;
     }
+<<<<<<< HEAD
   }
   resizeScreen() {
     const tileWidth = this._tileW;
     const requiredTileCount = Math.ceil(screenWidth / tileWidth) + 2;
     this._ensureGroundTileCount(requiredTileCount);
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const floorLineFrame = this._scene.textures.getFrame("GJ_WebSheet", "floorLine_01_001.png");
     const floorLineScale = screenWidth / (floorLineFrame ? floorLineFrame.width : 888);
     this._groundLine.x = screenWidth / 2;
@@ -510,6 +560,7 @@ window.LevelObject = class LevelObject {
     this._groundShadowR.x = screenWidth + 1;
     this._ceilingShadowR.x = screenWidth + 1;
   }
+<<<<<<< HEAD
   setEditorView(cameraX = 0, cameraY = 0, zoom = 1) {
     this._editorView = {
       cameraX,
@@ -524,6 +575,10 @@ window.LevelObject = class LevelObject {
     const editorZoom = editorView ? editorView.zoom : 1;
     const editorCameraX = editorView ? editorView.cameraX : 0;
     const editorCameraY = editorView ? editorView.cameraY : 0;
+=======
+  updateGroundTiles(cameraY = 0) {
+    const cameraX = this._cameraXRef.value;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     const tileWidth = this._tileW;
     let leftTileIndex;
     let rightTileIndex;
@@ -546,6 +601,7 @@ window.LevelObject = class LevelObject {
       leftTileIndex = b(0) + cameraY;
       rightTileIndex = ceilingActive ? 20 : 0;
     }
+<<<<<<< HEAD
     if (editorView) {
       leftTileIndex = b(0) * editorZoom - editorCameraY;
       rightTileIndex = ceilingActive ? 20 * editorZoom - editorCameraY : 0;
@@ -580,6 +636,8 @@ window.LevelObject = class LevelObject {
       this._ceilingShadowR.setVisible(ceilingVisible);
       return;
     }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     for (let i = 0; i < this._groundTiles.length; i++) {
       let groundTile = this._groundTiles[i];
       let ceilingTile = this._ceilingTiles[i];
@@ -589,6 +647,7 @@ window.LevelObject = class LevelObject {
         maxWorldX = groundTile._worldX;
         this._maxGroundWorldX = maxWorldX;
       }
+<<<<<<< HEAD
       let tileScreenX = editorView
         ? groundTile._worldX * editorZoom - editorCameraX
         : groundTile._worldX - cameraX;
@@ -598,6 +657,13 @@ window.LevelObject = class LevelObject {
       ceilingTile.x = tileScreenX;
       ceilingTile.y = rightTileIndex;
       ceilingTile.setScale(editorZoom, editorZoom);
+=======
+      let tileScreenX = groundTile._worldX - cameraX;
+      groundTile.x = tileScreenX;
+      groundTile.y = leftTileIndex;
+      ceilingTile.x = tileScreenX;
+      ceilingTile.y = rightTileIndex;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       ceilingTile.setVisible(this._flyGroundActive && this._groundTargetValue > 0 || ceilingActive);
     }
     this._groundLine.y = leftTileIndex;
@@ -729,6 +795,7 @@ window.LevelObject = class LevelObject {
       return null;
     }
   }
+<<<<<<< HEAD
   _isBlackHazardFrame(frameName) {
     if (!frameName) return false;
     const name = String(frameName).toLowerCase();
@@ -741,11 +808,16 @@ window.LevelObject = class LevelObject {
       name.indexOf("blade_") >= 0 ||
       name.indexOf("blade_b_") >= 0;
   }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   _applyVisualProps(scene, sprite, frameName, objectData, colorData = null) {
     if (!sprite) {
       return;
     }
+<<<<<<< HEAD
     const forceBlack = this._isBlackHazardFrame(frameName);
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     let {
       dx: offsetX,
       dy: offsetY
@@ -817,11 +889,14 @@ window.LevelObject = class LevelObject {
         sprite.setTint(0);
       }
     }
+<<<<<<< HEAD
     if (forceBlack) {
       sprite.setTint(0);
       sprite._eeForceBlack = true;
       sprite._isSaw = true;
     }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   }
   _addVisualSprite(sprite, objectData = null) {
     if (sprite) {
@@ -847,7 +922,11 @@ window.LevelObject = class LevelObject {
   _updateGlowVisibility = () => {
       if (!this._glowSprites) return;
       for (const glow of this._glowSprites) {
+<<<<<<< HEAD
           glow.setVisible(!window.isEditor);
+=======
+          glow.setVisible(!window.isEditor || window.showEditorGlow);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       }
   };
   _addGlowSprite(scene, x, y, frameName, objectData, worldX) {
@@ -866,9 +945,14 @@ window.LevelObject = class LevelObject {
       if (!this._glowSprites) {
         this._glowSprites = [];
       }
+<<<<<<< HEAD
       glowSprite._eeIsGlow = true;
       this._glowSprites.push(glowSprite);
       glowSprite.setVisible(!window.isEditor);
+=======
+      this._glowSprites.push(glowSprite);
+      glowSprite.setVisible(!window.isEditor || window.showEditorGlow);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       if (worldX !== undefined) {
         glowSprite._eeWorldX = worldX;
         glowSprite._eeBaseY = y;
@@ -878,6 +962,7 @@ window.LevelObject = class LevelObject {
     }
     return null;
   }
+<<<<<<< HEAD
   _getStableRandomFrame(levelObj, objectDef) {
     const frames = objectDef && objectDef.randomFrames;
     if (!Array.isArray(frames) || frames.length === 0) return objectDef ? objectDef.frame : null;
@@ -909,6 +994,8 @@ window.LevelObject = class LevelObject {
     levelObj._randomFrame = frameName;
     return frameName;
   }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   _spawnObject(levelObj) {
   this.objectSprites = this.objectSprites || [];
 
@@ -999,11 +1086,18 @@ window.LevelObject = class LevelObject {
     if (levelObj.id === 1006) {
       const _raw = levelObj._raw;
       const targetType = parseInt(_raw[52] ?? 0, 10);
+<<<<<<< HEAD
       const targetChannel = parseInt(_raw[23] ?? _raw[51] ?? 0, 10);
       this._pulseTriggers.push({
         x: levelObj.x * 2,
         targetGroup: targetType === 1 ? parseInt(_raw[51] ?? 0, 10) : 0,
         targetChannel: targetType === 0 ? targetChannel : 0,
+=======
+      this._pulseTriggers.push({
+        x: levelObj.x * 2,
+        targetGroup: targetType === 1 ? parseInt(_raw[51] ?? 0, 10) : 0,
+        targetChannel: targetType === 0 ? parseInt(_raw[51] ?? 0, 10) : 0,
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         targetType: targetType,
         color: {
           r: parseInt(_raw[7] ?? 255, 10),
@@ -1046,7 +1140,11 @@ window.LevelObject = class LevelObject {
 
   let frameName = objectDef ? objectDef.frame : null;
   if (objectDef && objectDef.randomFrames) {
+<<<<<<< HEAD
     frameName = this._getStableRandomFrame(levelObj, objectDef);
+=======
+    frameName = objectDef.randomFrames[Math.floor(Math.random() * objectDef.randomFrames.length)];
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   }
 
   const registerObjectSprite = (spr) => {
@@ -1064,6 +1162,7 @@ window.LevelObject = class LevelObject {
       frameName.includes("_front_");
 
     const zLayer =
+<<<<<<< HEAD
       levelObj._raw && levelObj._raw["24"] !== undefined
         ? levelObj.zLayer
         : (objectDef.default_z_layer !== undefined ? objectDef.default_z_layer : 0);
@@ -1074,12 +1173,26 @@ window.LevelObject = class LevelObject {
 
     let col1 = levelObj.color1 || (objectDef.default_base_color_channel !== undefined ? objectDef.default_base_color_channel : 0);
     if (col1 === 0 && (objectDef.type === solidType || objectDef.type === hazardType) && !window.isEditor) col1 = 1;
+=======
+      levelObj.zLayer || (objectDef.default_z_layer !== undefined ? objectDef.default_z_layer : 0);
+    const zOrd =
+      levelObj.zOrder || (objectDef.default_z_order !== undefined ? objectDef.default_z_order : 0);
+    const depthBase = { "-3": -6, "-1": -3, 0: 0, 1: 3, 3: 6, 5: 9 };
+    const objZDepth = (depthBase[zLayer] !== undefined ? depthBase[zLayer] : 0) + zOrd * 0.01;
+
+    let col1 = levelObj.color1 || (objectDef.default_base_color_channel !== undefined ? objectDef.default_base_color_channel : 0);
+    if (col1 === 0 && (objectDef.type === solidType || objectDef.type === hazardType)) col1 = 1;
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
 
     const col2 = levelObj.color2 || (objectDef.default_detail_color_channel !== undefined ? objectDef.default_detail_color_channel : -1);
     const canColor = objectDef.can_color !== false;
 
     const registerColor = (spr, ch) => {
+<<<<<<< HEAD
       if (ch > 0 && canColor && spr && !spr._isSaw && !spr._eeForceBlack) {
+=======
+      if (ch > 0 && canColor && spr && !spr._isSaw) {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         spr._eeColorChannel = ch;
         if (!this._colorChannelSprites[ch]) this._colorChannelSprites[ch] = [];
         this._colorChannelSprites[ch].push(spr);
@@ -1119,7 +1232,11 @@ window.LevelObject = class LevelObject {
     }
 
     let orbGlow = null;
+<<<<<<< HEAD
     if (objectDef.glow && !window.isEditor && !levelObj.noGlow && levelObj._raw?.["96"] !== "1") {
+=======
+    if (objectDef.glow) {
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
       orbGlow = this._addGlowSprite(scene, spriteWorldX, baseY, frameName, levelObj, worldX);
       if (orbGlow) {
         orbGlow._eeZDepth = objZDepth - 0.003;
@@ -1181,6 +1298,7 @@ window.LevelObject = class LevelObject {
         this._coinSprites.push(sprite);
       }
 
+<<<<<<< HEAD
       if (this._isBlackHazardFrame(frameName)) {
         sprite._isSaw = true;
         this._sawSprites.push(sprite);
@@ -1190,6 +1308,17 @@ window.LevelObject = class LevelObject {
         const sawMirror = addImageToScene(scene, spriteWorldX, baseY, frameName);
         if (sawMirror) {
           this._applyVisualProps(scene, sawMirror, frameName, levelObj, objectDef);
+=======
+      if (frameName.indexOf("sawblade") >= 0) {
+        sprite.setTint(0x000000);
+        sprite._isSaw = true;
+        this._sawSprites.push(sprite);
+
+        const sawMirror = addImageToScene(scene, spriteWorldX, baseY, frameName);
+        if (sawMirror) {
+          this._applyVisualProps(scene, sawMirror, frameName, levelObj, objectDef);
+          sawMirror.setTint(0x000000);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
           sawMirror.rotation = sprite.rotation + Math.PI;
           sawMirror._isSaw = true;
           sawMirror._eeWorldX = worldX;
@@ -1276,6 +1405,7 @@ window.LevelObject = class LevelObject {
           registerToGroups(childSprite, childWorldX, childBaseY);
           registerObjectSprite(childSprite);
 
+<<<<<<< HEAD
           if (this._isBlackHazardFrame(childDef.frame || frameName)) {
             childSprite._isSaw = true;
             this._sawSprites.push(childSprite);
@@ -1285,6 +1415,17 @@ window.LevelObject = class LevelObject {
             const childMirror = addImageToScene(scene, spriteWorldX + childDx, baseY + childDy, childDef.frame);
             if (childMirror) {
               this._applyVisualProps(scene, childMirror, childDef.frame, levelObj, childDef);
+=======
+          if (frameName.indexOf("sawblade") >= 0) {
+            childSprite.setTint(0x000000);
+            childSprite._isSaw = true;
+            this._sawSprites.push(childSprite);
+
+            const childMirror = addImageToScene(scene, spriteWorldX + childDx, baseY + childDy, childDef.frame);
+            if (childMirror) {
+              this._applyVisualProps(scene, childMirror, childDef.frame, levelObj, childDef);
+              childMirror.setTint(0x000000);
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
               childMirror.rotation = childSprite.rotation + Math.PI;
               childMirror._isSaw = true;
               childMirror._eeWorldX = childWorldX;
@@ -1572,6 +1713,49 @@ window.LevelObject = class LevelObject {
     }
 
     this.endXPos = Math.max(screenWidth + 1200, this._lastObjectX + 680);
+<<<<<<< HEAD
+=======
+
+    if (window.createObjectIds) {
+      const scene = this._scene;
+      const worldContainer = this.container || this._container;
+
+      if (worldContainer) {
+        this._debugIdTextsList = [];
+
+        _0x35f1ae.forEach((levelObj, index) => {
+          if (!levelObj || levelObj.id === undefined) return;
+
+          const worldX = levelObj.x * 2;
+          const textY = typeof b === 'function' ? b(levelObj.y * 2) : levelObj.y * 2;
+
+          const idText = scene.add.text(worldX, textY, String(levelObj.id), {
+            fontFamily: 'monospace',
+            fontSize: '30px',
+            fill: '#00ff00', 
+            stroke: '#000000',
+            strokeThickness: 3
+          });
+          idText.setOrigin(0.5);
+          idText.setDepth(999); 
+          idText.setVisible(window.showObjectIds);
+
+          worldContainer.add(idText);
+
+          idText.preUpdate = () => {
+            idText.x = worldX;
+            idText.y = textY;
+          };
+
+          scene.sys.updateList.add(idText);
+          this._debugIdTextsList.push(idText);
+
+          if (!this.objectSprites[index]) this.objectSprites[index] = [];
+          this.objectSprites[index].push(idText);
+        });
+      }
+    }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   }
   createEndPortal(_0x41fbdb) {
     if (window.isEditor) return; // not dealing with ts rn
@@ -1753,6 +1937,24 @@ window.LevelObject = class LevelObject {
       this._visMaxSec = sliderHeight;
     }
   }
+<<<<<<< HEAD
+=======
+  updateObjectDebugIds() {
+    if (window.showObjectIds) {
+      if (this._debugIdTextsList && this._debugIdTextsList.length > 0) {
+        for (const idText of this._debugIdTextsList) {
+          if (idText) idText.setVisible(true);
+        }
+      }
+    } else {
+      if (this._debugIdTextsList && this._debugIdTextsList.length > 0 ) {
+        for (const idText of this._debugIdTextsList) {
+          if (idText) idText.setVisible(false);
+        }
+      }
+    }
+  }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
   getNearbySectionObjects(_0x2e85c7) {
     const _0x55d1b7 = Math.max(0, Math.floor(_0x2e85c7 / 400));
     const _0x31c345 = Math.max(0, _0x55d1b7 - 1);
@@ -2046,13 +2248,19 @@ window.LevelObject = class LevelObject {
           const pulseHex = (pr << 16) | (pg << 8) | pb;
           for (const spr of sprites) {
             if (!spr || !spr.active) continue;
+<<<<<<< HEAD
             if (spr._eeForceBlack) continue;
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
             if (intensity > 0.01) { spr.setTint(pulseHex); spr._eePulsed = true; }
             else { spr.clearTint(); spr._eePulsed = false; }
           }
         }
       } else if (trig.targetType === 0 && trig.targetChannel > 0 && colorManager) {
+<<<<<<< HEAD
         const chSprites = this._colorChannelSprites[trig.targetChannel];
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         if (intensity > 0.01) {
           const baseColor = colorManager.getColor(trig.targetChannel);
           const pulsed = {
@@ -2061,6 +2269,7 @@ window.LevelObject = class LevelObject {
             b: Math.min(255, Math.round(baseColor.b + (trig.color.b - baseColor.b) * intensity)),
           };
           const pulseHex = (pulsed.r << 16) | (pulsed.g << 8) | pulsed.b;
+<<<<<<< HEAD
           if (chSprites) {
             for (const spr of chSprites) {
               if (!spr || !spr.active) continue;
@@ -2073,12 +2282,25 @@ window.LevelObject = class LevelObject {
             if (!spr || !spr.active) continue;
             spr._eePulsed = false;
           }
+=======
+          const chSprites = this._colorChannelSprites[trig.targetChannel];
+          if (chSprites) {
+            for (const spr of chSprites) {
+              if (!spr || !spr.active) continue;
+              spr.setTint(pulseHex); spr._eePulsed = true;
+            }
+          }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         }
       }
       if (pulse.elapsed >= pulse.totalDuration) {
         if (trig.targetType === 1 && trig.targetGroup > 0) {
           const sprites = this._groupSprites[trig.targetGroup];
+<<<<<<< HEAD
           if (sprites) for (const spr of sprites) { if (spr && spr.active && !spr._eeForceBlack) { spr.clearTint(); spr._eePulsed = false; } }
+=======
+          if (sprites) for (const spr of sprites) { if (spr && spr.active) { spr.clearTint(); spr._eePulsed = false; } }
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         }
         if (trig.targetType === 0 && trig.targetChannel > 0) {
           const chSprites = this._colorChannelSprites[trig.targetChannel];
@@ -2089,6 +2311,7 @@ window.LevelObject = class LevelObject {
     }
   }
   resetPulseTriggers() {
+<<<<<<< HEAD
     if (this._activePulses && this._activePulses.length) {
       const seenSprites = new Set();
       for (const pulse of this._activePulses) {
@@ -2116,6 +2339,8 @@ window.LevelObject = class LevelObject {
         }
       }
     }
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     this._pulseTriggerIdx = 0;
     this._activePulses = [];
   }
@@ -2129,7 +2354,10 @@ window.LevelObject = class LevelObject {
         if (!spr || !spr.active) continue;
         if (spr._eePulsed) continue;
         if (spr._isSaw) continue;
+<<<<<<< HEAD
         if (spr._eeForceBlack) continue;
+=======
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
         if (spr._eeAudioScale) continue;
         spr.setTint(hex);
       }
@@ -2264,7 +2492,11 @@ window.LevelObject = class LevelObject {
     }
   }
   setGroundColor(_0x3958eb) {
+<<<<<<< HEAD
     if (!this._groundTiles || !this._ceilingTiles) return;
+=======
+    if (window.isEditor) return; // not dealing with ts rn
+>>>>>>> aa956f1977b0a896e7ab682fa357558c4dd2e42c
     for (let _0x46c21a of this._groundTiles) {
       _0x46c21a.setTint(_0x3958eb);
     }
