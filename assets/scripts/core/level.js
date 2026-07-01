@@ -31,7 +31,6 @@ class Collider {
   }
 }
 
-
 function _decodeTextObjectString(value) {
   if (value === undefined || value === null) return "";
   const raw = String(value);
@@ -126,8 +125,8 @@ function parseLevel(levelString) {
     settings: settings,
     objects: objects
   };
-}
 
+}
 function getBackgroundTextureIndex(backgroundSetting) {
   const parsedBackgroundId = parseInt(String(backgroundSetting ?? "1"), 10);
   const gdBackgroundId = isNaN(parsedBackgroundId) || parsedBackgroundId <= 1 ? 1 : parsedBackgroundId;
@@ -415,8 +414,6 @@ window.LevelObject = class LevelObject {
     this._flyFloorY = 0;
     this._flyCeilingY = null;
     this._flyVisualOnly = false;
-    this._flyVisualFloorInset = 0;
-    this._flyVisualCeilingInset = 0;
     this.flyCameraTarget = null;
     this._colorTriggers = [];
     this._colorTriggerIdx = 0;
@@ -426,6 +423,7 @@ window.LevelObject = class LevelObject {
     this._orbSprites = [];
     this._coinSprites = [];
     this._sawSprites = [];
+    this._glowSpriteKeys = new Set();
     this._enterEffectTriggers = [];
     this._enterEffectTriggerIdx = 0;
     this._activeEnterEffect = 0;
@@ -506,7 +504,10 @@ window.LevelObject = class LevelObject {
       settingsMap[pairs[i]] = pairs[i + 1];
     }
     let colorStr = settingsMap["kS38"];
-    window._backgroundId = getBackgroundDisplayId(settingsMap["kA6"]);
+    window._backgroundId = settingsMap["kA6"] ? settingsMap["kA6"] : "01";
+    if (window._backgroundId.length < 2) {
+      window._backgroundId = "0"+window._backgroundId;
+    }
     window._groundId = getGroundTextureId(settingsMap["kA7"]);
     if (colorStr) {
       let channels = colorStr.split("|");
@@ -644,10 +645,8 @@ window.LevelObject = class LevelObject {
       rightTileIndex = b(this._flyCeilingY) + cameraY;
     } else if (this._flyGroundActive && this._groundTargetValue > 0.001) {
       let groundTarget = this._groundTargetValue;
-      const visualFloorInset = Number.isFinite(Number(this._flyVisualFloorInset)) ? Number(this._flyVisualFloorInset) : 0;
-      const visualCeilingInset = Number.isFinite(Number(this._flyVisualCeilingInset)) ? Number(this._flyVisualCeilingInset) : 0;
-      let targetGroundY = 620 - visualFloorInset;
-      let targetCeilingY = 20 + visualCeilingInset;
+      let targetGroundY = 620;
+      let targetCeilingY = 20;
       leftTileIndex = this._groundStartScreenY + (targetGroundY - this._groundStartScreenY) * groundTarget;
       rightTileIndex = this._ceilingStartScreenY + (targetCeilingY - this._ceilingStartScreenY) * groundTarget;
       let groundScreenY = b(0) + cameraY;
@@ -713,8 +712,6 @@ window.LevelObject = class LevelObject {
     this._ceilingY = null;
     this._flyCeilingY = null;
     this._flyVisualOnly = false;
-    this._flyVisualFloorInset = 0;
-    this._flyVisualCeilingInset = 0;
     this.flyCameraTarget = null;
   }
   _computeFlyBounds(centerY, height = f, isPortal = false) {
@@ -731,23 +728,18 @@ window.LevelObject = class LevelObject {
       ceilingY: floorY + height
     };
   }
-  setFlyMode(enabled, centerY, height = f, visualOnly = false, cameraHeight = height) {
+  setFlyMode(enabled, centerY, height = f, visualOnly = false) {
     if (enabled) {
       let bounds = this._computeFlyBounds(centerY, height, visualOnly);
       this._flyFloorY = bounds.floorY;
       this._flyCeilingY = bounds.ceilingY;
       this._flyVisualOnly = visualOnly;
-      const cameraSpan = Number.isFinite(Number(cameraHeight)) ? Number(cameraHeight) : height;
-      const defaultFlySpan = Number.isFinite(Number(typeof f !== "undefined" ? f : cameraSpan)) ? Number(typeof f !== "undefined" ? f : cameraSpan) : cameraSpan;
-      const visualSpanShrink = Math.max(0, defaultFlySpan - cameraSpan);
-      this._flyVisualFloorInset = visualOnly ? 0 : visualSpanShrink / 2;
-      this._flyVisualCeilingInset = visualOnly ? 0 : visualSpanShrink / 2;
       if (visualOnly) {
         this._flyGroundActive = true;
       } else {
         this._flyGroundActive = true;
       }
-      let flyCenter = this._flyFloorY + cameraSpan / 2;
+      let flyCenter = this._flyFloorY + height / 2;
       this.flyCameraTarget = flyCenter - 320 + o;
       if (this.flyCameraTarget < 0) {
         this.flyCameraTarget = 0;
@@ -765,8 +757,6 @@ window.LevelObject = class LevelObject {
       this._flyCeilingY = null;
       this._flyFloorY = null;
       this._flyVisualOnly = false;
-      this._flyVisualFloorInset = 0;
-      this._flyVisualCeilingInset = 0;
       if (this._flyGroundActive) {
         this._groundAnimFrom = this._groundTargetValue;
         this._groundAnimTo = 0;
@@ -902,38 +892,53 @@ window.LevelObject = class LevelObject {
       }
     }
   }
-  _getGlowFrameName(frameName) {
-    if (frameName && frameName.endsWith("_001.png")) {
+  _getGlowFrameName(frameName, objectData = null) {
+    if (objectData && objectData.glow_frame && objectData.glow_frame !== "none") {
+      return objectData.glow_frame;
+    } else if (frameName && frameName.endsWith("_001.png")) {
       return frameName.replace("_001.png", "_glow_001.png");
     } else {
       return null;
     }
   }
+  _isGlowVisible = () => {
+      return window.showGlow !== false && (!window.isEditor || window.showEditorGlow);
+  };
+  _getGlowAlphaMultiplier = () => {
+      return window.glowOpacity !== undefined ? window.glowOpacity : 0.5;
+  };
   _updateGlowVisibility = () => {
       if (!this._glowSprites) return;
-      const glowVisible = (!window.isEditor || window.showEditorGlow);
+      const glowVisible = this._isGlowVisible();
       for (const glow of this._glowSprites) {
           glow.setVisible(glowVisible);
       }
   };
   _addGlowSprite(scene, x, y, frameName, objectData, worldX) {
-    let glowFrameName = this._getGlowFrameName(frameName);
-    if (!glowFrameName) {
+    let glowFrameName = this._getGlowFrameName(frameName, objectData);
+    if (!glowFrameName || glowFrameName === frameName) {
       return;
     }
     if (!getAtlasFrame(scene, glowFrameName) && !scene.textures.exists(glowFrameName)) {
       return;
     }
+    const glowKey = `${worldX ?? x}:${y}:${glowFrameName}`;
+    if (this._glowSpriteKeys.has(glowKey)) {
+      return;
+    }
+    this._glowSpriteKeys.add(glowKey);
     let glowSprite = addImageToScene(scene, x, y, glowFrameName);
     if (glowSprite) {
       this._applyVisualProps(scene, glowSprite, glowFrameName, objectData);
-      glowSprite.setBlendMode(S);
+      glowSprite.setBlendMode(Phaser.BlendModes.ADD);
+      glowSprite.setAlpha(this._getGlowAlphaMultiplier());
       glowSprite._eeLayer = 0;
       if (!this._glowSprites) {
         this._glowSprites = [];
       }
       this._glowSprites.push(glowSprite);
-      glowSprite.setVisible((!window.isEditor || window.showEditorGlow));
+      glowSprite._eeIsGlowSprite = true;
+      glowSprite.setVisible(this._isGlowVisible());
       if (worldX !== undefined) {
         glowSprite._eeWorldX = worldX;
         glowSprite._eeBaseY = y;
@@ -1024,7 +1029,7 @@ window.LevelObject = class LevelObject {
 
     const worldX = levelObj.x * 2;
     const baseY = b(levelObj.y * 2);
-    const isStartPositionTrigger = [31, 34].includes(parseInt(levelObj.id ?? 0, 10));
+    const isStartPositionTrigger = [31, 34, 914].includes(parseInt(levelObj.id ?? 0, 10));
     const triggerContainer = scene.add.container(worldX, 0);
     triggerContainer.setDepth(995);
     triggerContainer._eeLayer = 2;
@@ -1139,82 +1144,6 @@ window.LevelObject = class LevelObject {
       this._setTriggerEditorVisualVisible(visual, visible);
     }
   }
-  _getTextObjectText(levelObj, objectDef = null) {
-    const raw = levelObj?._raw || {};
-    const textValue = levelObj?.text ?? _decodeTextObjectString(raw[31] ?? raw["31"] ?? objectDef?.defaultText ?? "A");
-    return String(textValue ?? "");
-  }
-
-  _spawnTextObject(levelObj, objectDef, linkedObjectId) {
-    const scene = this._scene;
-    if (!scene || !levelObj) return null;
-
-    const worldX = levelObj.x * 2;
-    const worldY = b(levelObj.y * 2);
-    const rawText = this._getTextObjectText(levelObj, objectDef);
-    const baseSize = Number.isFinite(Number(objectDef?.textSize)) ? Number(objectDef.textSize) : 36;
-    const textSize = Math.max(1, Math.round(baseSize));
-    let textSprite = null;
-
-    if (scene.cache?.bitmapFont?.has && scene.cache.bitmapFont.has("bigFont")) {
-      textSprite = scene.add.bitmapText(worldX, worldY, "bigFont", rawText, textSize).setOrigin(0.5);
-    } else {
-      textSprite = scene.add.text(worldX, worldY, rawText, {
-        fontFamily: "Pusab, Arial, sans-serif",
-        fontSize: `${textSize}px`,
-        color: "#ffffff",
-        stroke: "#000000",
-        strokeThickness: 6
-      }).setOrigin(0.5);
-    }
-
-    const scale = Number.isFinite(Number(levelObj.scale)) ? Number(levelObj.scale) : 1;
-    textSprite.setScale(scale * (levelObj.flipX ? -1 : 1), scale * (levelObj.flipY ? -1 : 1));
-    textSprite.setAngle(levelObj.rot || 0);
-
-    const depthBase = { "-3": -6, "-1": -3, 0: 0, 1: 3, 3: 6, 5: 9 };
-    const zLayer = parseInt(levelObj.zLayer ?? objectDef?.default_z_layer ?? 3, 10) || 0;
-    const zOrder = parseInt(levelObj.zOrder ?? objectDef?.default_z_order ?? 0, 10) || 0;
-    const zDepth = (depthBase[zLayer] ?? 0) + zOrder * 0.001;
-    textSprite.setDepth(zDepth);
-    textSprite._eeLayer = 1;
-    textSprite._eeWorldX = worldX;
-    textSprite._eeBaseY = worldY;
-    textSprite._eeOrigWorldX = worldX;
-    textSprite._eeOrigBaseY = worldY;
-    textSprite._eeZDepth = zDepth;
-    textSprite._eeOrigAlpha = 1;
-    textSprite._eeTextObject = true;
-    textSprite._eeObjectId = linkedObjectId;
-
-    const colorChannel = parseInt(levelObj.color1 || objectDef?.default_base_color_channel || 0, 10) || 0;
-    if (colorChannel > 0 && objectDef?.can_color !== false) {
-      textSprite._eeColorChannel = colorChannel;
-      if (!this._colorChannelSprites[colorChannel]) this._colorChannelSprites[colorChannel] = [];
-      this._colorChannelSprites[colorChannel].push(textSprite);
-    }
-
-    if (levelObj.groups) {
-      const groupIds = String(levelObj.groups).split(".").map(Number).filter(n => n > 0);
-      if (groupIds.length) {
-        textSprite._eeGroups = groupIds;
-        for (const groupId of groupIds) {
-          if (!this._groupSprites[groupId]) this._groupSprites[groupId] = [];
-          this._groupSprites[groupId].push(textSprite);
-        }
-      }
-    }
-
-    this._addToSection(textSprite);
-
-    if (Number.isInteger(linkedObjectId)) {
-      if (!this.objectSprites[linkedObjectId]) this.objectSprites[linkedObjectId] = [];
-      this.objectSprites[linkedObjectId].push(textSprite);
-    }
-
-    return textSprite;
-  }
-
   _spawnObject(levelObj) {
   this.objectSprites = this.objectSprites || [];
 
@@ -1334,7 +1263,7 @@ window.LevelObject = class LevelObject {
       });
     }
 
-    if ([31, 34].includes(levelObj.id)) {
+    if ([31, 34, 914].includes(levelObj.id)) {
       this._startPositions.push({
         x: 2 * levelObj.x,
         y: 2 * levelObj.y,
@@ -1345,11 +1274,6 @@ window.LevelObject = class LevelObject {
         mirrored: levelObj.mirrored,
         gravityFlipped: levelObj.flipGravity
       });
-    }
-
-    if (objectDef.textObject) {
-      this._spawnTextObject(levelObj, objectDef, linkedObjectId);
-      return objectDef;
     }
 
     this._spawnTriggerEditorVisual(levelObj, objectDef, linkedObjectId);
@@ -2331,7 +2255,7 @@ window.LevelObject = class LevelObject {
       for (const spr of sprites) {
         if (!spr || !spr.active) continue;
         if (spr._eeActive) continue;
-        spr.setAlpha(op);
+        spr.setAlpha(spr._eeIsGlowSprite ? op * this._getGlowAlphaMultiplier() : op);
       }
     }
   }
@@ -2344,7 +2268,7 @@ window.LevelObject = class LevelObject {
       for (const spr of this._groupSprites[gid]) {
         if (!spr || !spr.active) continue;
         if (spr._eeActive) continue;
-        spr.setAlpha(1);
+        spr.setAlpha(spr._eeIsGlowSprite ? this._getGlowAlphaMultiplier() : 1);
         spr._eeOrigAlpha = 1;
       }
     }
@@ -2524,7 +2448,7 @@ window.LevelObject = class LevelObject {
         for (let _0x13e116 = 0; _0x13e116 < _0x14a035.length; _0x13e116++) {
           const visMinSection = _0x14a035[_0x13e116];
           visMinSection._eeActive = false;
-          visMinSection.visible = true;
+          visMinSection.visible = visMinSection._eeIsGlowSprite ? this._isGlowVisible() : true;
           visMinSection.x = visMinSection._eeWorldX;
           visMinSection.y = visMinSection._eeBaseY;
           if (!visMinSection._eeAudioScale) {
@@ -2537,11 +2461,15 @@ window.LevelObject = class LevelObject {
   }
   _getGroupOpacityForSprite(spr) {
     const groups = spr && spr._eeGroups;
-    if (!groups || !groups.length) return 1;
     let op = 1;
-    for (const gid of groups) {
-      const g = this._groupOpacity[gid];
-      if (g !== undefined && g < op) op = g;
+    if (groups && groups.length) {
+      for (const gid of groups) {
+        const g = this._groupOpacity[gid];
+        if (g !== undefined && g < op) op = g;
+      }
+    }
+    if (spr && spr._eeIsGlowSprite) {
+      op *= this._getGlowAlphaMultiplier();
     }
     return op;
   }
