@@ -991,7 +991,7 @@ window.LevelObject = class LevelObject {
           glow.setVisible(glowVisible);
       }
   };
-  _addGlowSprite(scene, x, y, frameName, objectData, worldX) {
+  _addGlowSprite(scene, x, y, frameName, objectData, worldX, colorData = null) {
     let glowFrameName = this._getGlowFrameName(frameName, objectData);
     if (!glowFrameName || glowFrameName === frameName) {
       return;
@@ -1007,6 +1007,11 @@ window.LevelObject = class LevelObject {
     let glowSprite = addImageToScene(scene, x, y, glowFrameName);
     if (glowSprite) {
       this._applyVisualProps(scene, glowSprite, glowFrameName, objectData);
+      if (colorData?.tint !== undefined) {
+        glowSprite.setTint(colorData.tint);
+      } else if (colorData?.black) {
+        glowSprite.setTint(0);
+      }
       glowSprite.setBlendMode(Phaser.BlendModes.ADD);
       glowSprite.setAlpha(this._getGlowAlphaMultiplier());
       glowSprite._eeLayer = 0;
@@ -1563,6 +1568,7 @@ window.LevelObject = class LevelObject {
       if (orbGlow) {
         orbGlow._eeZDepth = objZDepth - 0.003;
         orbGlow._eeOrigAlpha = 1;
+        registerColor(orbGlow, col1);
         registerToGroups(orbGlow, worldX, baseY);
         registerObjectSprite(orbGlow);
       }
