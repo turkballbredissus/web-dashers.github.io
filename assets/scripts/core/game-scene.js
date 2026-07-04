@@ -5028,6 +5028,11 @@ _buildSettingsPopup() {
       { text: "checking for hazards lmao", scale: 0.7 },
       { text: "There's probably more but I forgot", color: 0x808080, scale: 0.5 },
       { text: "- Lasokar", scale: 0.7, color: 0x00e676 },
+      { text: "- Portal/Orb guides added", scale: 0.6 },
+      { text: "- Info boxes in the options menu", scale: 0.6 },
+      { text: "- fixed the stupid missing clubstep tile", scale: 0.3 },
+      { text: "- Removed Herobrine", scale: 0.6 },
+      { text: "- Lasokar", scale: 0.5, color: 0x9966CC },
     ]; 
     let yPos = 0;
     const lineItems = [];
