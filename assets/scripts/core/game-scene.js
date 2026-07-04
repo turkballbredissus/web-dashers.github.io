@@ -4596,7 +4596,7 @@ _buildSettingsPopup() {
       { text: "Made by RobTop Games", scale: 0.8, font: "goldFont" },
       { text: "Modded by:", scale: 0.9, font: "bigFont" },
       { text: "breadbb, PinkDev, rohanis0000,", scale: 0.7, font: "goldFont" },
-      { text: "bog, , AntiMatter,", scale: 0.7, font: "goldFont" },
+      { text: "bog, Lasokar, AntiMatter,", scale: 0.7, font: "goldFont" },
       { text: "arbstro, and aloaf", scale: 0.7, font: "goldFont" },
       { text: "Contributors:", scale: 0.9, font: "bigFont" },
       { text: "t0nchi7 and Itzar.", scale: 0.7, font: "goldFont" },
