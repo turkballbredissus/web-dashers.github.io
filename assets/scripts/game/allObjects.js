@@ -1766,7 +1766,14 @@ window.allobjects = function() {
     "spritesheet": "GJ_GameSheet-uhd",
     "default_detail_color_channel": -1,
     "default_z_layer": 5,
-    "default_z_order": 2
+    "default_z_order": 2,
+    "children": [
+      {
+        "frame": "square_f_05_001.png",
+        "localDy": 0,
+        "z": -1
+      }
+    ],
   },
   "120": {
     "type": "deco",
