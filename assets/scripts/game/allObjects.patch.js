@@ -44,139 +44,190 @@
     }
   }
 
-  // Helper: find the nearest blocking surface above or below an orb
+  // Robust surface finder using level objects / ground/ceiling tiles
   function findSurfaceY(scene, orb, facingUp) {
     try {
-      // orb world positions (many objects store _eeWorldX/_eeBaseY in this codebase)
-      const orbWorldX = orb._eeWorldX !== undefined ? orb._eeWorldX : (orb._worldX !== undefined ? orb._worldX : orb.x || 0);
-      const orbBaseY = orb._eeBaseY !== undefined ? orb._eeBaseY : (orb._eeBaseY !== undefined ? orb._eeBaseY : (orb._baseY !== undefined ? orb._baseY : orb.y || 0));
-
+      const orbWorldX = orb._eeWorldX ?? orb._worldX ?? orb.x ?? 0;
+      const orbBaseY = orb._eeBaseY ?? orb._baseY ?? orb.y ?? 0;
+      const level = scene._level || scene.level || null;
       const candidates = [];
-      // include level ground/ceiling tiles if present
-      try {
-        const level = scene._level || (scene.level || null);
-        if (level) {
-          // ground tiles
-          for (const t of (level._groundTiles || [])) {
-            if (!t) continue;
-            const wx = t._worldX !== undefined ? t._worldX : (t.x || 0);
-            const wy = t.y || (typeof window.b === 'function' ? window.b(0) : 0);
-            candidates.push({x: wx, y: wy, w: (t.width || 32), source: 'ground'});
-          }
-          for (const t of (level._ceilingTiles || [])) {
-            if (!t) continue;
-            const wx = t._worldX !== undefined ? t._worldX : (t.x || 0);
-            const wy = t.y || (typeof window.b === 'function' ? window.b(0) : 0);
-            candidates.push({x: wx, y: wy, w: (t.width || 32), source: 'ceiling'});
-          }
+      if (level && Array.isArray(level.objects)) {
+        for (const lo of level.objects) {
+          if (!lo || typeof lo.x !== 'number' || typeof lo.y !== 'number') continue;
+          const worldX = lo.x * 2;
+          const worldY = lo.y * 2;
+          const baseY = (typeof window.b === 'function') ? window.b(worldY) : ((typeof window.T === 'number') ? window.T - worldY : worldY);
+          const halfW = (typeof lo.w === 'number' && lo.w > 0) ? lo.w / 2 : ((typeof lo.gridW === 'number' && window.a) ? (lo.gridW * window.a) / 2 : 32);
+          candidates.push({ baseY, worldX, worldY, halfW, raw: lo });
         }
-      } catch (e) {}
-
-      // include visible sprites/objects that have world coordinates
-      const children = (scene.children && scene.children.list) ? scene.children.list.slice() : [];
-      for (const c of children) {
-        if (!c) continue;
-        // skip the orb itself
-        if (c === orb) continue;
-        // prefer precomputed world coordinates
-        const wx = c._eeWorldX !== undefined ? c._eeWorldX : (c._worldX !== undefined ? c._worldX : (c.x !== undefined ? c.x : null));
-        const by = c._eeBaseY !== undefined ? c._eeBaseY : (c._eeBaseY !== undefined ? c._eeBaseY : (c._baseY !== undefined ? c._baseY : (c.y !== undefined ? c.y : null)));
-        if (wx === null || by === null) continue;
-        // skip UI and very small helper sprites
-        const tex = c.texture && c.texture.key ? String(c.texture.key) : '';
-        if (!tex) continue;
-        // compute approximate width for horizontal overlap check
-        const w = (c.displayWidth || c.width || 32) / 2;
-        candidates.push({x: wx, y: by, w, source: 'object', ref: c});
       }
-
-      // filter candidates by horizontal overlap with orb
-      const horizThreshold = 40; // allow some leeway
-      const filtered = candidates.filter(c => Math.abs((c.x || 0) - orbWorldX) <= Math.max(horizThreshold, c.w || 32));
-      if (filtered.length === 0) {
-        // no candidate found; fallback to a world-edge: use ground or ceiling Y
-        try {
-          const level = scene._level || (scene.level || null);
-          if (level) {
-            // find lowest ground tile y and highest ceiling tile y
-            const groundYs = (level._groundTiles || []).map(t => t.y || (typeof window.b === 'function' ? window.b(0) : 0)).filter(Boolean);
-            const ceilingYs = (level._ceilingTiles || []).map(t => t.y || (typeof window.b === 'function' ? window.b(0) : 0)).filter(Boolean);
-            if (facingUp) {
-              // teleport to topmost ceiling if exists
-              if (ceilingYs.length) return Math.min(...ceilingYs);
-            } else {
-              if (groundYs.length) return Math.max(...groundYs);
-            }
-          }
-        } catch (e) {}
-        // final fallback: use orbBaseY +/- offset
-        return orbBaseY + (facingUp ? -160 : 160);
+      if (level) {
+        for (const t of (level._groundTiles || [])) {
+          if (!t) continue;
+          const wx = t._worldX ?? t.x ?? 0;
+          const by = t.y ?? ((typeof window.b === 'function') ? window.b(0) : 0);
+          candidates.push({ baseY: by, worldX: wx, halfW: (t.width||64)/2, source: 'ground' });
+        }
+        for (const t of (level._ceilingTiles || [])) {
+          if (!t) continue;
+          const wx = t._worldX ?? t.x ?? 0;
+          const by = t.y ?? ((typeof window.b === 'function') ? window.b(0) : 0);
+          candidates.push({ baseY: by, worldX: wx, halfW: (t.width||64)/2, source: 'ceiling' });
+        }
       }
-
-      // choose nearest candidate vertically in the facing direction
+      if (!candidates.length) return orbBaseY + (facingUp ? -160 : 160);
+      const horizTol = 48;
+      const overlap = candidates.filter(c => Math.abs((c.worldX||0) - orbWorldX) <= Math.max(horizTol, c.halfW || horizTol));
+      const pool = overlap.length ? overlap : candidates;
       let chosen = null;
       if (facingUp) {
-        // want candidate.y < orbBaseY, choose max
-        const ups = filtered.filter(c => (c.y || 0) < orbBaseY - 2);
-        if (ups.length) chosen = ups.reduce((a,b) => (a.y > b.y ? a : b));
-        else chosen = filtered.reduce((a,b) => (a.y < b.y ? a : b)); // no above: pick top-most
+        const ups = pool.filter(c => (c.baseY || 0) < orbBaseY - 2);
+        chosen = ups.length ? ups.reduce((a,b) => a.baseY > b.baseY ? a : b) : pool.reduce((a,b) => a.baseY < b.baseY ? a : b);
       } else {
-        const downs = filtered.filter(c => (c.y || 0) > orbBaseY + 2);
-        if (downs.length) chosen = downs.reduce((a,b) => (a.y < b.y ? a : b));
-        else chosen = filtered.reduce((a,b) => (a.y > b.y ? a : b)); // pick bottom-most
+        const downs = pool.filter(c => (c.baseY || 0) > orbBaseY + 2);
+        chosen = downs.length ? downs.reduce((a,b) => a.baseY < b.baseY ? a : b) : pool.reduce((a,b) => a.baseY > b.baseY ? a : b);
       }
-
-      if (chosen) return chosen.y;
-    } catch (e) {}
-    // fallback
-    try {
-      const orbBaseY = orb._eeBaseY !== undefined ? orb._eeBaseY : orb.y || 0;
-      return orbBaseY + (facingUp ? -160 : 160);
-    } catch (e) { return 0; }
+      return chosen ? chosen.baseY : (orbBaseY + (facingUp ? -160 : 160));
+    } catch (e) {
+      return orb._eeBaseY ?? orb.y ?? (orb.y + (facingUp ? -160 : 160));
+    }
   }
 
-  // Scene watcher: finds spider_orb sprites in scenes and wires click/overlap behavior
-  function watchScenes() {
+  // Activation: expose so console or other code can call it
+  function activateOrb(scene, orb) {
     try {
-      if (!window.game || !window.game.scene) return;
-      const scenes = window.game.scene.scenes || (window.game.scene._scenes ? window.game.scene._scenes : []);
-      for (const scene of scenes) {
-        if (!scene || scene.__wd_spider_patched) continue;
-        scene.__wd_spider_patched = true;
+      if (!orb || !scene) return;
+      if (orb.__wd_spider_used) return;
+      orb.__wd_spider_used = true;
+      let ang = 0;
+      try { ang = typeof orb.angle === 'number' ? orb.angle : (typeof orb.rotation === 'number' ? orb.rotation * 180 / Math.PI : 0); } catch(e){}
+      ang = ((ang % 360) + 540) % 360 - 180;
+      const facingUp = (ang > 90 || ang < -90);
+      const targetY = findSurfaceY(scene, orb, facingUp);
+      const targetX = orb._eeWorldX ?? orb._worldX ?? orb.x ?? 0;
+      const playerSprite = (scene.player && (scene.player.sprite || scene.player._sprite)) || scene._playerSprite || (window.player && window.player.sprite);
+      if (playerSprite) {
+        playerSprite.x = targetX;
+        playerSprite.y = targetY;
+        if (playerSprite.body) {
+          try { if (typeof playerSprite.body.setVelocity === 'function') playerSprite.body.setVelocity(0,0); if (playerSprite.body.velocity){playerSprite.body.velocity.x=0;playerSprite.body.velocity.y=0;} } catch(e){}
+        }
+        try {
+          if (scene.player && typeof scene.player.setGravityFlip === 'function') scene.player.setGravityFlip(facingUp);
+          else if (scene.player && typeof scene.player.setFlipGravity === 'function') scene.player.setFlipGravity(facingUp);
+          else if (scene.player && typeof scene.player.enterSpiderMode === 'function') scene.player.enterSpiderMode({ upsideDown: !!facingUp });
+          else { if (scene.player) scene.player.flipGravity = !!facingUp; if (window.player) window.player.flipGravity = !!facingUp; }
+        } catch(e){}
+      } else {
+        if (scene.player) scene.player.flipGravity = !!facingUp;
+        if (window.player) window.player.flipGravity = !!facingUp;
+      }
+      try { const cam = scene.cameras && scene.cameras.main; if (cam && typeof cam.pan === 'function' && playerSprite) cam.pan(playerSprite.x, playerSprite.y, 200); } catch(e){}
+      try { if (scene.tweens) scene.tweens.add({ targets: orb, alpha: 0, scale: 0.3, duration: 220, onComplete: ()=>{ try{ orb.destroy(); }catch{} } }); else orb.destroy(); } catch(e){ try{ orb.destroy(); }catch{} }
+      console.log('spider orb activated', { facingUp, targetX, targetY });
+    } catch (e) { console.error('activateOrb error', e); }
+  }
 
-        const scan = () => {
-          try {
-            if (!scene.children) return;
-            const children = scene.children.list || [];
-            for (const c of children) {
-              if (!c || !c.texture) continue;
-              const tex = (c.texture.key || (c.frame && c.frame.texture && c.frame.texture.key));
-              if (!tex) continue;
-              if (String(tex) === 'spider_orb' || String(c.frame && c.frame.name) === 'spider_orb.png') {
-                if (c.__wd_spider_wired) continue;
-                c.__wd_spider_wired = true;
+  // Install a robust global pointer handler that works even if sprites aren't interactive or overlays exist
+  function installGlobalHandler() {
+    try {
+      if (window.__wd_spider_global_installed) return;
+      window.__wd_spider_global_installed = true;
 
-                // Make interactive for click
-                try {
-                  if (c.setInteractive) {
-                    c.setInteractive({ useHandCursor: true });
-                    c.on('pointerdown', (pointer) => {
-                      try {
-                        handleOrbActivate(scene, c);
-                      } catch (e) {}
-                    });
-                  }
-                } catch (e) {}
+      const handler = (ev) => {
+        try {
+          const scenes = window.game && window.game.scene && window.game.scene.scenes;
+          if (!scenes || !scenes.length) return;
+          // try to detect which scene contains orbs; prefer the first with orbs
+          let chosen = null;
+          for (const s of scenes) {
+            if (!s || !s.children) continue;
+            const list = s.children.list || [];
+            if (list.some(n => n && (String(n.texture?.key) === 'spider_orb' || String(n.frame?.name) === 'spider_orb.png'))) { chosen = s; break; }
+          }
+          if (!chosen) chosen = scenes[0];
+          const scene = chosen;
 
-                // Ensure physics body exists so overlap code (if wanted) can run
-                try {
-                  if (scene.physics && scene.physics.add && !c.body) {
-                    scene.physics.add.existing(c);
-                    if (c.body && c.body.setImmovable) c.body.setImmovable(true);
-                    if (c.body && c.body.setAllowGravity) c.body.setAllowGravity(false);
-                  }
-                } catch (e) {}
+          // translate client coords to world coords using canvas and camera
+          const el = document.elementFromPoint(ev.clientX, ev.clientY) || document.querySelector('canvas');
+          if (!el) return;
+          const rect = el.getBoundingClientRect();
+          const canvasX = ev.clientX - rect.left;
+          const canvasY = ev.clientY - rect.top;
+          const cam = scene.cameras && scene.cameras.main;
+          let worldPoint = { x: canvasX, y: canvasY };
+          if (cam && typeof cam.getWorldPoint === 'function') {
+            try { worldPoint = cam.getWorldPoint(canvasX, canvasY); } catch(e) {}
+          } else {
+            const scrollX = cam && cam.scrollX ? cam.scrollX : 0;
+            const scrollY = cam && cam.scrollY ? cam.scrollY : 0;
+            worldPoint = { x: canvasX + scrollX, y: canvasY + scrollY };
+          }
 
-                // Optional overlap-trigger (touch devices / auto-trigger)
-                try {
-                  const playerSprite = (scene.player && (scene.player.sprite || scene.player._sprite)) || scene._playerSprite || (scene.children && scene.children.getByName && scene.children.getB[...]
+          // find orb at worldPoint
+          const children = scene.children && scene.children.list ? scene.children.list : [];
+          for (const c of children) {
+            if (!c) continue;
+            const key = String(c.texture?.key || '');
+            const frame = String(c.frame?.name || '');
+            if (key !== 'spider_orb' && frame !== 'spider_orb.png') continue;
+            let hit = false;
+            if (typeof c.getBounds === 'function') {
+              const b = c.getBounds();
+              if (b && typeof b.contains === 'function' && b.contains(worldPoint.x, worldPoint.y)) hit = true;
+            } else {
+              const dx = Math.abs((c.x || 0) - worldPoint.x);
+              const dy = Math.abs((c.y || 0) - worldPoint.y);
+              if (dx <= (c.displayWidth || 32)/2 && dy <= (c.displayHeight || 32)/2) hit = true;
+            }
+            if (hit) {
+              ev.stopPropagation?.(); ev.preventDefault?.();
+              activateOrb(scene, c);
+              break;
+            }
+          }
+        } catch (e) { /* swallow */ }
+      };
+
+      // Install on Phaser input if available (preferred) otherwise on document
+      try {
+        const scenes = window.game && window.game.scene && window.game.scene.scenes;
+        if (scenes && scenes.length) {
+          for (const s of scenes) {
+            try {
+              if (s && s.input && typeof s.input.on === 'function') s.input.on('pointerdown', handler, { capture: true });
+            } catch (e) {}
+          }
+        }
+        // Always attach to document as a fallback
+        document.addEventListener('pointerdown', handler, { capture: true });
+      } catch (e) {
+        document.addEventListener('pointerdown', handler, { capture: true });
+      }
+
+      // expose activation to global for debugging
+      window.__wd_spider_activate = activateOrb;
+    } catch (e) {}
+  }
+
+  // Run on next tick
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(() => { patchAllObjects(); installGlobalHandler(); }, 0);
+  } else {
+    window.addEventListener('DOMContentLoaded', () => { patchAllObjects(); installGlobalHandler(); });
+    setTimeout(() => { patchAllObjects(); installGlobalHandler(); }, 500);
+  }
+
+  // Also ensure image is preloaded via spiderOrb helper if present
+  try {
+    if (window.__wd_spider_orb && typeof window.__wd_spider_orb.registerPreload === 'function') {
+      window.__wd_spider_orb.registerPreload(function(loaderCb) {
+        try {
+          const loader = (window.game && window.game.load) ? window.game.load : (window && window.load ? window.load : null);
+          if (typeof loaderCb === 'function') loaderCb(loader);
+        } catch (e) {}
+      });
+    }
+  } catch (e) {}
+
+})();
