@@ -84,24 +84,59 @@
                       if (orbS.__wd_spider_used) return;
                       orbS.__wd_spider_used = true;
 
-                      // Attempt to call an engine-specific hook to set spider mode
+                      // Determine facing (up or down) from sprite angle/rotation
+                      let ang = 0;
                       try {
-                        if (scene.player && typeof scene.player.enterSpiderMode === 'function') {
-                          scene.player.enterSpiderMode();
-                        } else if (scene.player && typeof scene.player.setForm === 'function') {
-                          scene.player.setForm('spider');
-                        } else if (window.player && typeof window.player.enterSpiderMode === 'function') {
-                          window.player.enterSpiderMode();
-                        } else {
-                          // Fallback: set a flag and apply a small bounce
-                          if (playerS.body && playerS.body.setVelocityY) {
-                            playerS.body.setVelocityY(-420);
+                        if (typeof orbS.angle === 'number') ang = orbS.angle;
+                        else if (typeof orbS.rotation === 'number') ang = orbS.rotation * 180 / Math.PI;
+                      } catch (e) { ang = 0; }
+                      // normalize to (-180,180]
+                      ang = ((ang % 360) + 540) % 360 - 180;
+                      const facingUp = (ang > 90 || ang < -90);
+
+                      // Teleport player to the area orb is facing (up or down)
+                      try {
+                        const targetX = orbS.x || orbS._eeWorldX || (orbS.body && orbS.body.x) || 0;
+                        const offset = 160; // pixels to teleport; tune this if you want different distance
+                        const targetY = (orbS.y || orbS._eeBaseY || (orbS.body && orbS.body.y) || 0) + (facingUp ? -offset : offset);
+
+                        // Move the player sprite
+                        try {
+                          playerS.x = targetX;
+                          playerS.y = targetY;
+                          // reset velocities if arcade body
+                          if (playerS.body) {
+                            try {
+                              if (playerS.body.setVelocity) playerS.body.setVelocity(0, 0);
+                              if (playerS.body.velocity) { playerS.body.velocity.x = 0; playerS.body.velocity.y = 0; }
+                              // try to set gravity sign if possible
+                              if (typeof playerS.body.setGravityY === 'function') {
+                                const cur = (playerS.body.gravity && typeof playerS.body.gravity.y === 'number') ? Math.abs(playerS.body.gravity.y) : 600;
+                                playerS.body.setGravityY(facingUp ? -Math.abs(cur) : Math.abs(cur));
+                              }
+                            } catch (e) {}
                           }
-                          if (scene.player) scene.player.isSpider = true;
-                        }
+                        } catch (e) {}
+
+                        // Attempt engine-specific API to set gravity/flip
+                        try {
+                          if (scene.player && typeof scene.player.setGravityFlip === 'function') {
+                            scene.player.setGravityFlip(facingUp);
+                          } else if (scene.player && typeof scene.player.setFlipGravity === 'function') {
+                            scene.player.setFlipGravity(facingUp);
+                          } else if (scene.player && typeof scene.player.setGravity === 'function') {
+                            scene.player.setGravity(facingUp ? -1 : 1);
+                          } else if (window.player && typeof window.player.setGravityFlip === 'function') {
+                            window.player.setGravityFlip(facingUp);
+                          } else {
+                            if (scene.player) scene.player.flipGravity = !!facingUp;
+                            if (window.player) window.player.flipGravity = !!facingUp;
+                          }
+                        } catch (e) {}
+
                       } catch (e) {}
 
-                      // visual feedback
+                      // visual feedback & remove orb
                       try {
                         scene.tweens.add({ targets: orbS, alpha: 0, scale: 0.3, duration: 220, onComplete: () => { try { orbS.destroy(); } catch (e) {} } });
                       } catch (e) { try { orbS.destroy(); } catch (e) {} }
