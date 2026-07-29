@@ -2369,6 +2369,7 @@ window.LevelObject = class LevelObject {
       const orbObj = new Collider(jumpRingType, worldX, worldY, orbW, orbH, levelObj.rot || 0);
       orbObj.orbId = levelObj.id;
       orbObj.orbRotation = levelObj.rot || 0;
+      orbObj.orbFlipY = !!levelObj.flipY;
       orbObj._dashHoldTicks = 0;
       registerCollider(orbObj);
       this.objects.push(orbObj);

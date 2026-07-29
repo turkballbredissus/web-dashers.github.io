@@ -4329,12 +4329,18 @@ _updateWaveJump(dt) {
                 _boostedThisStep = true;
                 this._markActivatedOrbSprites(gameObj);
               } else if (_orbId === 3004) {
+                // Swallow the press the way a spider teleport does, so landing back on a
+                // surface with canJump set doesn't immediately spend the same click on a
+                // jump. Only this orb consumes the input; every other orb is untouched.
+                this.p.upKeyPressed = false;
+                this.p.queuedHold = false;
                 // The sprite is an arrow that points up at rot 0 and rotates clockwise,
-                // so cos(rot) is how much it points upward. Closer to up teleports up
-                // (and flips gravity); closer to down teleports down. Exactly sideways
-                // (90/270) counts as up.
+                // so cos(rot) is how much it points upward, negated if the object is
+                // flipped vertically. Closer to up teleports up (and flips gravity);
+                // closer to down teleports down. Exactly sideways (90/270) counts as up.
                 const _spRotRad = (gameObj.orbRotation || 0) * Math.PI / 180;
-                const _spGoingUp = Math.cos(_spRotRad) >= -1e-9;
+                const _spFlipY = gameObj.orbFlipY ? -1 : 1;
+                const _spGoingUp = Math.cos(_spRotRad) * _spFlipY >= -1e-9;
                 const _spSurfaceY = this._findSpiderTeleportSurface(_spGoingUp, pieceWidth, playerSize);
                 const _spOldY = this.p.y;
                 _teleportedThisStep = true;
