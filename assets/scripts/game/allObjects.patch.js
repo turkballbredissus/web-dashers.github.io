@@ -118,21 +118,12 @@
       if (facingUp) {
         // want candidate.y < orbBaseY, choose max
         const ups = filtered.filter(c => (c.y || 0) < orbBaseY - 2);
-        if (ups.length) {
-          chosen = ups.reduce((a,b) => (a.y > b.y ? a : b));
-        } else {
-          // no object strictly above, pick the top-most available (min y)
-          chosen = filtered.reduce((a,b) => (a.y < b.y ? a : b));
-        }
+        if (ups.length) chosen = ups.reduce((a,b) => (a.y > b.y ? a : b));
+        else chosen = filtered.reduce((a,b) => (a.y < b.y ? a : b)); // no above: pick top-most
       } else {
-        // want candidate.y > orbBaseY, choose min
         const downs = filtered.filter(c => (c.y || 0) > orbBaseY + 2);
-        if (downs.length) {
-          chosen = downs.reduce((a,b) => (a.y < b.y ? a : b));
-        } else {
-          // no object strictly below, pick the bottom-most (max y)
-          chosen = filtered.reduce((a,b) => (a.y > b.y ? a : b));
-        }
+        if (downs.length) chosen = downs.reduce((a,b) => (a.y < b.y ? a : b));
+        else chosen = filtered.reduce((a,b) => (a.y > b.y ? a : b)); // pick bottom-most
       }
 
       if (chosen) return chosen.y;
