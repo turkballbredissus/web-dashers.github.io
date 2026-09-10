@@ -2721,9 +2721,13 @@ window.LevelObject = class LevelObject {
             localDy = -localDy;
           }
 
-          const rot = (levelObj.rot || 0) * Math.PI / 180;
-          childDx = localDx * Math.cos(rot) - localDy * Math.sin(rot);
-          childDy = localDx * Math.sin(rot) + localDy * Math.cos(rot);
+          const childScale = gdObjectScale(levelObj);
+          const placed = gdTransformLocalPoint(
+            localDx, localDy, levelObj.rot || 0,
+            childScale.x, childScale.y, gdObjectWarp(levelObj)
+          );
+          childDx = placed.x;
+          childDy = placed.y;
         }
 
         const childWorldX = worldX + childDx;
