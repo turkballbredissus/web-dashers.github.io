@@ -3191,7 +3191,7 @@ if (this.p.isFlying || this.p.isUfo) {
       }
       const crossedUp = pLastHigh <= surfaceY + gamemodeAddition && pHigh > surfaceY;
       if ((this.p.yVelocity >= 0 || (gFlip ? stickRest : stickPush) || crossedUp) &&
-          pHigh >= surfaceY - slopeTol * 1.5 && pHigh <= surfaceY + slopeTol) {
+          pHigh >= surfaceY - (this.p.isWave ? 2 : slopeTol * 1.5) && pHigh <= surfaceY + slopeTol) {
         if (this._slopeRiding && this._slopeExitVel < 0 && tangent > 0) {
           return { landed: false, died: false };
         }
