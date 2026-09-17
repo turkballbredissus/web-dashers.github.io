@@ -4827,11 +4827,12 @@ if (this.p.isFlying || this.p.isUfo) {
           }
           continue;
         } else if (_colType === solidType) {
-          let _0x146a97 = playersY - playerSize + gamemodeAddition;
-          let _0x869e42 = playersLastY - playerSize + gamemodeAddition;
-          let _0x3e7199 = playersY + playerSize - gamemodeAddition;
-          let _0x135a9d = playersLastY + playerSize - gamemodeAddition;
-          const _0x55559d = 9;
+          const _solidSize = this.p.isWave ? waveHitSize : playerSize;
+          let _0x146a97 = playersY - _solidSize + gamemodeAddition;
+          let _0x869e42 = playersLastY - _solidSize + gamemodeAddition;
+          let _0x3e7199 = playersY + _solidSize - gamemodeAddition;
+          let _0x135a9d = playersLastY + _solidSize - gamemodeAddition;
+          const _0x55559d = this.p.isWave ? waveHitSize / 3 : 9;
           let iscolliding;
           if (_hasCircleHitbox) {
             const _sdx = pieceWidth - gameObj.x;
@@ -4850,8 +4851,8 @@ if (this.p.isFlying || this.p.isUfo) {
           const _0xLandTop = (this.p.yVelocity >= 0 || this.p.onGround) && (_0x3e7199 <= top || _0x135a9d <= top);
           const isstandingOnAPlatform = this.p.gravityFlipped ? _0xLandTop : _0xLandBot;
           const _slopeLeadIn = this._slopeRiding && (this.p.gravityFlipped
-            ? _0x3e7199 <= top + playerSize
-            : _0x146a97 >= bottom - playerSize);
+            ? _0x3e7199 <= top + _solidSize
+            : _0x146a97 >= bottom - _solidSize);
           if (iscolliding && !isstandingOnAPlatform && !_slopeLeadIn) {
             if (window.noClip) {
 
@@ -4865,16 +4866,16 @@ if (this.p.isFlying || this.p.isUfo) {
           }
           const _sDist = Math.abs(playersY - playersLastY);
           const _normalLandBot = _0x146a97 >= bottom && _0x146a97 - bottom <= _sDist + gamemodeAddition;
-          const _coyoteBot = this.p.onGround && !this._slopeRiding && this._slopeExitGrace === 0 && _0x146a97 >= bottom && _0x146a97 - bottom < playerSize + gamemodeAddition;
+          const _coyoteBot = this.p.onGround && !this._slopeRiding && this._slopeExitGrace === 0 && _0x146a97 >= bottom && _0x146a97 - bottom < _solidSize + gamemodeAddition;
           const _skipBot = _0x146a97 < bottom && _0x869e42 >= bottom;
           const _landBot = _normalLandBot || _coyoteBot || _skipBot;
           const _normalLandTop = _0x3e7199 <= top && top - _0x3e7199 <= _sDist + gamemodeAddition;
-          const _coyoteTop = this.p.onGround && !this._slopeRiding && this._slopeExitGrace === 0 && _0x3e7199 <= top && top - _0x3e7199 < playerSize + gamemodeAddition;
+          const _coyoteTop = this.p.onGround && !this._slopeRiding && this._slopeExitGrace === 0 && _0x3e7199 <= top && top - _0x3e7199 < _solidSize + gamemodeAddition;
           const _skipTop = _0x3e7199 > top && _0x135a9d <= top;
           const _landTop = _normalLandTop || _coyoteTop || _skipTop;
-          if (pieceWidth + playerSize - 5 > left && pieceWidth - playerSize + 5 < right) {
+          if (pieceWidth + _solidSize - 5 > left && pieceWidth - _solidSize + 5 < right) {
             if (!this.p.gravityFlipped && _landBot && (this.p.yVelocity <= 0 || this.p.onGround)) {
-              this.p.y = bottom + playerSize;
+              this.p.y = bottom + _solidSize;
               this.hitGround();
               _0x30410f = true;
               this.p.collideBottom = bottom;
@@ -4884,7 +4885,7 @@ if (this.p.isFlying || this.p.isUfo) {
               continue;
             }
             if (this.p.gravityFlipped && !this.p.isFlying && _landTop && (this.p.yVelocity >= 0 || this.p.onGround)) {
-              this.p.y = top - playerSize;
+              this.p.y = top - _solidSize;
               this.hitGround();
               _0x30410f = true;
               this.p.onCeiling = true;
@@ -4896,14 +4897,14 @@ if (this.p.isFlying || this.p.isUfo) {
             }
             if (this.p.isUfo) {
               if (!this.p.gravityFlipped && _landTop && (this.p.yVelocity >= 0 || this.p.onGround)) {
-                this.p.y = top - playerSize;
+                this.p.y = top - _solidSize;
                 this.hitGround();
                 this.p.onCeiling = true;
                 this.p.collideTop = top;
                 continue;
               }
               if (this.p.gravityFlipped && _landBot && (this.p.yVelocity <= 0 || this.p.onGround)) {
-                this.p.y = bottom + playerSize;
+                this.p.y = bottom + _solidSize;
                 this.hitGround();
                 _0x30410f = true;
                 this.p.onCeiling = true;
@@ -4912,8 +4913,8 @@ if (this.p.isFlying || this.p.isUfo) {
               }
               continue;
             }
-            if (_landTop && (this.p.yVelocity >= 0 || this.p.onGround) && this.p.isFlying) {
-              this.p.y = top - playerSize;
+            if (_landTop && (this.p.yVelocity >= 0 || this.p.onGround) && (this.p.isFlying || this.p.isWave)) {
+              this.p.y = top - _solidSize;
               this.hitGround();
               this.p.onCeiling = true;
               this.p.collideTop = top;
@@ -4929,8 +4930,8 @@ if (this.p.isFlying || this.p.isUfo) {
               }
               continue;
             }
-            if (this.p.gravityFlipped && _landBot && (this.p.yVelocity <= 0 || this.p.onGround) && this.p.isFlying) {
-              this.p.y = bottom + playerSize;
+            if (this.p.gravityFlipped && _landBot && (this.p.yVelocity <= 0 || this.p.onGround) && (this.p.isFlying || this.p.isWave)) {
+              this.p.y = bottom + _solidSize;
               this.hitGround();
               _0x30410f = true;
               this.p.onCeiling = true;
@@ -5233,10 +5234,16 @@ if (this.p.isFlying || this.p.isUfo) {
             }
 
             graphics.lineStyle(1, hexToHexadecimal("0000ff"), 1);
+            // inner hitbox
+            graphics.strokeRect(trailX - 9, trailY - 9, 18, 18);
+          } else {
+            const waveOuter = entrySize === 18 ? 6 : 9;
+            const waveInner = waveOuter / 3;
+            graphics.lineStyle(1, hexToHexadecimal("ff0000"), 0.5);
+            graphics.strokeRect(trailX - waveOuter, trailY - waveOuter, waveOuter * 2, waveOuter * 2);
+            graphics.lineStyle(1, hexToHexadecimal("0000ff"), 1);
+            graphics.strokeRect(trailX - waveInner, trailY - waveInner, waveInner * 2, waveInner * 2);
           }
-
-          // inner hitbox
-          graphics.strokeRect(trailX - 9, trailY - 9, 18, 18);
       });
     }
 
@@ -5276,9 +5283,16 @@ if (this.p.isFlying || this.p.isUfo) {
       }
 
       graphics.lineStyle(2, hexToHexadecimal("0000ff"), 1);
+      // inner hitbox
+      graphics.strokeRect(_playerDrawX - 9, _0x1e788a - 9, 18, 18);
+    } else {
+      const waveOuter = this.p.isMini ? 6 : 9;
+      const waveInner = waveOuter / 3;
+      graphics.lineStyle(2, hexToHexadecimal("ff0000"), 0.8);
+      graphics.strokeRect(_playerDrawX - waveOuter, _0x1e788a - waveOuter, waveOuter * 2, waveOuter * 2);
+      graphics.lineStyle(2, hexToHexadecimal("0000ff"), 1);
+      graphics.strokeRect(_playerDrawX - waveInner, _0x1e788a - waveInner, waveInner * 2, waveInner * 2);
     }
-    // inner hitbox
-    graphics.strokeRect(_playerDrawX - 9, _0x1e788a - 9, 18, 18);
   }
   playEndAnimation(_0x24408e, _0x281588, _0x54bbf4) {
     this._endAnimating = true;
