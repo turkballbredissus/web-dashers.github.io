@@ -4878,7 +4878,20 @@ if (this.p.isFlying || this.p.isUfo) {
           const _slopeLeadIn = this._slopeRiding && (this.p.gravityFlipped
             ? _0x3e7199 <= top + _solidSize
             : _0x146a97 >= bottom - _solidSize);
-          if (iscolliding && !isstandingOnAPlatform && !_slopeLeadIn) {
+          const _sDist = Math.abs(playersY - playersLastY);
+          const _waveTol = this.p.isWave ? _solidSize - _0x55559d : 0;
+          const _normalLandBot = _0x146a97 >= bottom && _0x146a97 - bottom <= _sDist + gamemodeAddition;
+          const _coyoteBot = this.p.onGround && !this._slopeRiding && this._slopeExitGrace === 0 && _0x146a97 >= bottom && _0x146a97 - bottom < _solidSize + gamemodeAddition;
+          const _skipBot = _0x146a97 < bottom && _0x869e42 >= bottom;
+          const _waveLandBot = this.p.isWave && (this.p.yVelocity <= 0 || this.p.onGround) && _0x146a97 < bottom && bottom - _0x146a97 <= _waveTol;
+          const _landBot = _normalLandBot || _coyoteBot || _skipBot || _waveLandBot;
+          const _normalLandTop = _0x3e7199 <= top && top - _0x3e7199 <= _sDist + gamemodeAddition;
+          const _coyoteTop = this.p.onGround && !this._slopeRiding && this._slopeExitGrace === 0 && _0x3e7199 <= top && top - _0x3e7199 < _solidSize + gamemodeAddition;
+          const _skipTop = _0x3e7199 > top && _0x135a9d <= top;
+          const _waveLandTop = this.p.isWave && (this.p.yVelocity >= 0 || this.p.onGround) && _0x3e7199 > top && _0x3e7199 - top <= _waveTol;
+          const _landTop = _normalLandTop || _coyoteTop || _skipTop || _waveLandTop;
+          const _safeOnSurface = this.p.isWave ? (_landBot || _landTop) : isstandingOnAPlatform;
+          if (iscolliding && !_safeOnSurface && !_slopeLeadIn) {
             if (window.noClip) {
 
               continue;
@@ -4889,15 +4902,6 @@ if (this.p.isFlying || this.p.isUfo) {
             this.killPlayer();
             return;
           }
-          const _sDist = Math.abs(playersY - playersLastY);
-          const _normalLandBot = _0x146a97 >= bottom && _0x146a97 - bottom <= _sDist + gamemodeAddition;
-          const _coyoteBot = this.p.onGround && !this._slopeRiding && this._slopeExitGrace === 0 && _0x146a97 >= bottom && _0x146a97 - bottom < _solidSize + gamemodeAddition;
-          const _skipBot = _0x146a97 < bottom && _0x869e42 >= bottom;
-          const _landBot = _normalLandBot || _coyoteBot || _skipBot;
-          const _normalLandTop = _0x3e7199 <= top && top - _0x3e7199 <= _sDist + gamemodeAddition;
-          const _coyoteTop = this.p.onGround && !this._slopeRiding && this._slopeExitGrace === 0 && _0x3e7199 <= top && top - _0x3e7199 < _solidSize + gamemodeAddition;
-          const _skipTop = _0x3e7199 > top && _0x135a9d <= top;
-          const _landTop = _normalLandTop || _coyoteTop || _skipTop;
           if (pieceWidth + _solidSize - 5 > left && pieceWidth - _solidSize + 5 < right) {
             if (!this.p.gravityFlipped && _landBot && (this.p.yVelocity <= 0 || this.p.onGround)) {
               this.p.y = bottom + _solidSize;
