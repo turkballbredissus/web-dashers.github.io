@@ -225,6 +225,7 @@ const ringType = "ring";
 const triggerType = "trigger";
 const speedType = "speed";
 const slopeType = "slope";
+const dBlockType = "dblock";
 const _SLOPE_DATA = {
   289:{gw:1,gh:1,angle:45,sq:false,dir:1}, 291:{gw:2,gh:1,angle:22.5,sq:false,dir:-1},
   294:{gw:1,gh:1,angle:45,sq:false},295:{gw:2,gh:1,angle:22.5,sq:false},
@@ -2545,6 +2546,10 @@ window.LevelObject = class LevelObject {
       sprite._eeBaseY = baseY;
       sprite._eeZDepth = objZDepth;
       sprite._eeOrigAlpha = 1;
+      if (objectDef?.type === dBlockType) {
+        sprite._eeEditorOnly = true;
+        sprite.setVisible(!!window.isEditor);
+      }
       if (isSawObjectId) {
         sprite._isSaw = true;
         const isDecorativeSaw = objectDef?.type === decoType && frameName?.includes("sawblade");
@@ -3009,6 +3014,15 @@ window.LevelObject = class LevelObject {
       const w = objectDef.gridW * a * hitScaleX;
       const h = objectDef.gridH * a * hitScaleY;
       const collider = new Collider(solidType, worldX, worldY, w, h, levelObj.rot || 0);
+      collider.objid = levelObj.id;
+      registerCollider(collider);
+      this.objects.push(collider);
+      hasCollisionEntry = true;
+      this._addCollisionToSection(collider);
+    } else if (objectDef.type === dBlockType && objectDef.gridW > 0 && objectDef.gridH > 0) {
+      const w = objectDef.gridW * a * hitScaleX;
+      const h = objectDef.gridH * a * hitScaleY;
+      const collider = new Collider(dBlockType, worldX, worldY, w, h, levelObj.rot || 0);
       collider.objid = levelObj.id;
       registerCollider(collider);
       this.objects.push(collider);
@@ -4429,7 +4443,8 @@ window.LevelObject = class LevelObject {
           visMinSection._eeActive = false;
           const showtheportalthing = !visMinSection._eePortalGuide || (!window.isEditor && window.enablePortalGuide !== false);
           const showtheorbthing = !visMinSection._eeOrbGuide || (!window.isEditor && window.enableOrbGuide !== false);
-          visMinSection.visible = showtheportalthing && showtheorbthing;
+          const showeditoronly = !visMinSection._eeEditorOnly || !!window.isEditor;
+          visMinSection.visible = showtheportalthing && showtheorbthing && showeditoronly;
           visMinSection.x = visMinSection._eeWorldX;
           visMinSection.y = visMinSection._eeBaseY;
           if (!visMinSection._eeAudioScale) {

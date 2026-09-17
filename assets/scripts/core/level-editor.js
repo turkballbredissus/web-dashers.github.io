@@ -1837,7 +1837,7 @@ class LevelEditor {
     if (this._categoryContainer) this._categoryContainer.destroy();
 
     const OBJECT_CATEGORIES = [
-        { id: "blocks",  icon: "tab1", types: ["solid", "soliddeco"] },
+        { id: "blocks",  icon: "tab1", types: ["solid", "soliddeco", "dblock"] },
         { id: "slopes",  icon: "tab6", types: ["slope"] },
         { id: "hazards", icon: "tab2", types: ["hazard", "spike"] },
         { id: "orbs",    icon: "tab3", types: ["ring", "pad", "portal", "speed", "coin"] },

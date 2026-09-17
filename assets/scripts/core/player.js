@@ -3094,7 +3094,7 @@ if (this.p.isFlying || this.p.isUfo) {
     const wallRight = wallLeft + wallW;
     const boxBot = gameObj.y - halfH;
     const boxTop = gameObj.y + halfH;
-    const inner = 9;
+    const inner = this.p.isWave ? (this.p.isMini ? 2 : 3) : 9;
     return (pieceWidth + inner > wallLeft) && (pieceWidth - inner < wallRight)
         && (playersY + inner > boxBot) && (playersY - inner < boxTop);
   }
@@ -3150,11 +3150,15 @@ if (this.p.isFlying || this.p.isUfo) {
 
     if (this.p.isWave) {
       const waveHalf = this.p.isMini ? 6 : 9;
-      const insideSolid = gameObj.slopeSolidBelow
-        ? (playersY - waveHalf < surfaceY)
-        : (playersY + waveHalf > surfaceY);
-      if (insideSolid) return { landed: false, died: true, immediate: true };
-      return { landed: false, died: false };
+      if (!this._waveSlideActive) {
+        const waveInner = waveHalf / 3;
+        const insideSolid = gameObj.slopeSolidBelow
+          ? (playersY - waveInner < surfaceY)
+          : (playersY + waveInner > surfaceY);
+        if (insideSolid) return { landed: false, died: true, immediate: true };
+        return { landed: false, died: false };
+      }
+      playerSize = waveHalf;
     }
 
     const pLow = playersY - playerSize + gamemodeAddition;
@@ -3164,8 +3168,9 @@ if (this.p.isFlying || this.p.isUfo) {
     const _tanSpeed = playerSpeed * (window.slopeTangentD !== undefined ? window.slopeTangentD : d);
     const tangent = Math.tan(angle) * _tanSpeed;
 
-    if (this.p.isFlying && !this.p.isUfo) {
+    if ((this.p.isFlying && !this.p.isUfo) || this.p.isWave) {
       const gFlip = this.p.gravityFlipped;
+      const slopeTol = this.p.isWave ? 30 : playerSize;
       const actsAsFloor = (!isCeilSlope && !gFlip) || (isCeilSlope && gFlip);
       const snapAbove = actsAsFloor !== gFlip;
       const stickRest = this.p.onGround && !this.p.upKeyDown;
@@ -3173,7 +3178,7 @@ if (this.p.isFlying || this.p.isUfo) {
       if (snapAbove) {
         const crossedDown = pLastLow >= surfaceY - gamemodeAddition && pLow < surfaceY;
         if ((this.p.yVelocity <= 0 || (gFlip ? stickPush : stickRest) || crossedDown) &&
-            pLow >= surfaceY - playerSize && pLow <= surfaceY + gamemodeAddition) {
+            pLow >= surfaceY - slopeTol && pLow <= surfaceY + gamemodeAddition) {
           if (this._slopeRiding && this._slopeExitVel > 0 && tangent < 0) {
             return { landed: false, died: false };
           }
@@ -3186,7 +3191,7 @@ if (this.p.isFlying || this.p.isUfo) {
       }
       const crossedUp = pLastHigh <= surfaceY + gamemodeAddition && pHigh > surfaceY;
       if ((this.p.yVelocity >= 0 || (gFlip ? stickRest : stickPush) || crossedUp) &&
-          pHigh >= surfaceY - playerSize * 1.5 && pHigh <= surfaceY + playerSize) {
+          pHigh >= surfaceY - slopeTol * 1.5 && pHigh <= surfaceY + slopeTol) {
         if (this._slopeRiding && this._slopeExitVel < 0 && tangent > 0) {
           return { landed: false, died: false };
         }
@@ -3280,6 +3285,7 @@ if (this.p.isFlying || this.p.isUfo) {
   _applySlopeExitVelocity() {
     if (this._slopeExitVel === null) return;
     if (this._skipSlopeExit) return;
+    if (this.p.isWave) return;
     if (this.p.isFlying && !this.p.isUfo) {
       if (!this.p.upKeyDown || this._slopeRidePush) {
         const shipCap = window.slopeShipCap !== undefined ? window.slopeShipCap : 16;
@@ -4210,6 +4216,20 @@ if (this.p.isFlying || this.p.isUfo) {
     let _slopeTangentThisFrame = 0;
     let _slopeBlockedThisStep = false;
     const _0x198534 = this._gameLayer.getNearbySectionObjects(pieceWidth);
+    this._waveSlideActive = false;
+    if (this.p.isWave) {
+      for (let dObj of _0x198534) {
+        if (dObj.type !== dBlockType) continue;
+        const dRad = dObj.rotationDegrees * Math.PI / 180;
+        const dHalfW = Math.abs(dObj.w / 2 * Math.cos(dRad)) + Math.abs(dObj.h / 2 * Math.sin(dRad));
+        const dHalfH = Math.abs(dObj.w / 2 * Math.sin(dRad)) + Math.abs(dObj.h / 2 * Math.cos(dRad));
+        if (pieceWidth + waveHitSize > dObj.x - dHalfW && pieceWidth - waveHitSize < dObj.x + dHalfW &&
+            playersY + waveHitSize > dObj.y - dHalfH && playersY - waveHitSize < dObj.y + dHalfH) {
+          this._waveSlideActive = true;
+          break;
+        }
+      }
+    }
     for (let gameObj of _0x198534) {
       let left = gameObj.x - gameObj.w / 2;
       let right = gameObj.x + gameObj.w / 2;
@@ -4847,6 +4867,11 @@ if (this.p.isFlying || this.p.isUfo) {
           } else {
             iscolliding = pieceWidth + _0x55559d > left && pieceWidth - _0x55559d < right && playersY + _0x55559d > top && playersY - _0x55559d < bottom;
           }
+          if (this.p.isWave && !this._waveSlideActive) {
+            if (!iscolliding || window.noClip || this.breakabletheblock(gameObj)) continue;
+            this.killPlayer();
+            return;
+          }
           const _0xLandBot = (this.p.yVelocity <= 0 || this.p.onGround) && (_0x146a97 >= bottom || _0x869e42 >= bottom);
           const _0xLandTop = (this.p.yVelocity >= 0 || this.p.onGround) && (_0x3e7199 <= top || _0x135a9d <= top);
           const isstandingOnAPlatform = this.p.gravityFlipped ? _0xLandTop : _0xLandBot;
@@ -5132,6 +5157,8 @@ if (this.p.isFlying || this.p.isUfo) {
         hitboxColor = 16711935;
       } else if (nearObject.type === slopeType) {
         hitboxColor = 65535;
+      } else if (nearObject.type === dBlockType) {
+        hitboxColor = 0xaaaaaa;
       }
       const xPos = isFlipped ? screenWidth - objXCenter : objXCenter;
       graphics.lineStyle(2, hitboxColor, 0.7);
